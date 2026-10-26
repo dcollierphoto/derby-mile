@@ -40,6 +40,9 @@ canvas{display:block;width:100%;height:auto}
 .chip.win{background:color-mix(in srgb,var(--c) 14%,transparent)}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 button{font:700 16px var(--body);color:#fff;background:var(--pink);border:0;border-radius:6px;padding:10px 16px;cursor:pointer}
+.seg{display:inline-flex;border:2px solid var(--ink);border-radius:8px;overflow:hidden}
+.seg button{background:transparent;color:var(--ink);border-radius:0;padding:8px 14px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--floor)}
 button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .banner{font-size:20px;font-weight:700;min-height:1.5em}
 .steps{list-style:none;margin:0;padding:0;display:grid;gap:14px;counter-reset:s}
@@ -69,7 +72,8 @@ a{color:var(--tape);font-weight:600}
 
   <section>
     <h2>The race</h2>
-    <p>Three skaters with the exact same legs race 5 laps. The only difference is the path they take.</p>
+    <div class="row"><span class="seg" role="group" aria-label="Race type"><button type="button" id="mLaps" aria-pressed="true">5-lap race</button><button type="button" id="mMile" aria-pressed="false">1-mile race</button></span></div>
+    <p id="intro">Three skaters with the exact same legs race 5 laps. The only difference is the path they take.</p>
     <div class="rink">
       <canvas id="cv" width="900" height="620" aria-label="Three skaters racing on a roller derby track"></canvas>
       <div class="board">
@@ -78,6 +82,7 @@ a{color:var(--tape);font-weight:600}
         <div class="chip" id="cOrange" style="--c:var(--orange)"><b>Wide</b><span>Stays out wide</span><i id="lOrange">0.0 laps</i></div>
       </div>
       <div class="row"><button id="again" type="button">Race again</button><p class="banner" id="banner" aria-live="polite"></p></div>
+      <p class="why" id="mileTip" hidden><b>Skating a mile?</b> If the mile is measured by real distance, stay a few feet out the whole way, even in the turns, so you never have to slow down. Fewer, longer laps win. If your coach counts laps instead, skate the diamond.</p>
     </div>
   </section>
 
@@ -211,6 +216,7 @@ function matchPace(target){
 }
 
 
+const mmss=s=>{ const m=Math.floor(s/60), r=Math.round(s-m*60); return r===60?`${m+1}:00`:`${m}:${String(r).padStart(2,'0')}`; };
 // ---- race setup: her pace (31 laps in 5 min) ----
 const VT = 13.8*1.4667;
 const LINES = {
@@ -227,7 +233,9 @@ const sk = Object.fromEntries(Object.entries(LINES).map(([k,b])=>{
   const tt=new Float64Array(n+1); for(let i=0;i<n;i++){ const j=(i+1)%n; tt[i+1]=tt[i]+Math.hypot(X[j]-X[i],Y[j]-Y[i])/((V[i]+V[j])/2); }
   return [k,{X,Y,tt,T:tt[n],L:s.L,n}];
 }));
-const finish = Math.max(...Object.values(sk).map(s=>s.T*RACE));
+let mode='laps';
+const goalT = s => mode==='laps' ? s.T*RACE : MILE*s.T/s.L;
+let finish = Math.max(...Object.values(sk).map(goalT));
 function where(s,t){ const lap=Math.floor(t/s.T), r=t-lap*s.T; let lo=0,hi=s.n; while(hi-lo>1){ const m=(lo+hi)>>1; if(s.tt[m]<=r) lo=m; else hi=m; }
   const f=(r-s.tt[lo])/((s.tt[lo+1]-s.tt[lo])||1), j=(lo+1)%s.n; return {x:s.X[lo]+(s.X[j]-s.X[lo])*f, y:s.Y[lo]+(s.Y[j]-s.Y[lo])*f, laps:t/s.T}; }
 
@@ -247,27 +255,35 @@ function paths(){ for(const k in sk){ const s=sk[k]; ctx.beginPath(); for(let i=
   ctx.globalAlpha=.55; ctx.lineWidth=k==='pink'?4:2.5; ctx.setLineDash(k==='pink'?[]:[2,7]); ctx.lineCap='round'; ctx.strokeStyle=css(COL[k]); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; } }
 function star(x,y,r,c){ ctx.beginPath(); for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5, rr=i%2?r*.45:r; ctx.lineTo(x+rr*Math.cos(a), y+rr*Math.sin(a));} ctx.closePath(); ctx.fillStyle=c; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle=css('--panel'); ctx.stroke(); }
 
-let t=0, last=null, done=false; const SPEEDUP=3;
+let t=0, last=null, done=false; const speedup=()=> mode==='laps'?3:14;
 const NAME={blue:'Hugger',pink:'Diamond',orange:'Wide'}, CHIP={blue:'cBlue',pink:'cPink',orange:'cOrange'}, LAB={blue:'lBlue',pink:'lPink',orange:'lOrange'};
 function frame(ts){
-  if(last!==null && !done) t+=(ts-last)/1000*SPEEDUP; last=ts;
+  if(last!==null && !done) t+=(ts-last)/1000*speedup(); last=ts;
   track(); paths();
-  for(const k of ['orange','blue','pink']){ const s=sk[k], tt=Math.min(t, s.T*RACE), w=where(s, tt);
+  for(const k of ['orange','blue','pink']){ const s=sk[k], g=goalT(s), tt=Math.min(t, g), w=where(s, tt);
     const [px,py]=P(w.x,w.y); star(px,py,k==='pink'?15:12,css(COL[k]));
-    $(LAB[k]).textContent = tt>=s.T*RACE-1e-6 ? `Done in ${(s.T*RACE).toFixed(1)} s` : `${w.laps.toFixed(1)} laps`; }
-  const winner = Object.keys(sk).reduce((a,b)=>sk[a].T<sk[b].T?a:b);
-  if(t>=sk[winner].T*RACE){ $(CHIP[winner]).classList.add('win');
-    const gapB=(sk.blue.T-sk.pink.T)*RACE, gapO=(sk.orange.T-sk.pink.T)*RACE;
-    $('banner').textContent = `${NAME[winner]} wins! Hugger finishes ${gapB.toFixed(1)} seconds later, Wide ${gapO.toFixed(1)} seconds later.`; }
+    const doneTxt = mode==='laps' ? `Done in ${g.toFixed(1)} s` : `Done in ${mmss(g)} (${(MILE/s.L).toFixed(1)} laps)`;
+    $(LAB[k]).textContent = tt>=g-1e-6 ? doneTxt : (mode==='laps' ? `${w.laps.toFixed(1)} laps` : `${Math.round(w.laps*s.L).toLocaleString()} ft`); }
+  const order = Object.keys(sk).sort((a,b)=>goalT(sk[a])-goalT(sk[b])), winner=order[0];
+  if(t>=goalT(sk[winner])){ $(CHIP[winner]).classList.add('win');
+    const gap=k=>{ const d=goalT(sk[k])-goalT(sk[winner]); return mode==='laps'? d.toFixed(1)+' seconds' : Math.round(d)+' seconds'; };
+    $('banner').textContent = `${NAME[winner]} wins! ${NAME[order[1]]} finishes ${gap(order[1])} later, ${NAME[order[2]]} ${gap(order[2])} later.`; }
   if(t>=finish) done=true;
   requestAnimationFrame(frame);
 }
-$('again').onclick=()=>{ t=0; done=false; $('banner').textContent=''; Object.values(CHIP).forEach(id=>$(id).classList.remove('win')); };
+const restart=()=>{ t=0; done=false; $('banner').textContent=''; Object.values(CHIP).forEach(id=>$(id).classList.remove('win')); };
+$('again').onclick=restart;
+function setMode(m){ mode=m; finish=Math.max(...Object.values(sk).map(goalT));
+  $('mLaps').setAttribute('aria-pressed',m==='laps'); $('mMile').setAttribute('aria-pressed',m==='mile');
+  $('intro').textContent = m==='laps'
+    ? 'Three skaters with the exact same legs race 5 laps. The only difference is the path they take.'
+    : 'Now they race one real mile (5,280 feet), measured by distance instead of laps. Wide has fewer laps to skate, but each one is longer.';
+  $('mileTip').hidden = m!=='mile'; restart(); }
+$('mLaps').onclick=()=>setMode('laps'); $('mMile').onclick=()=>setMode('mile');
 if(matchMedia('(prefers-reduced-motion: reduce)').matches){ t=finish; }
 requestAnimationFrame(frame);
 
 // ---- your time ----
-const mmss=s=>{ const m=Math.floor(s/60), r=Math.round(s-m*60); return r===60?`${m+1}:00`:`${m}:${String(r).padStart(2,'0')}`; };
 function calc(){ const n=+$('laps').value; if(!(n>0)) return; const lap=300/n;
   $('aLap').textContent = lap.toFixed(1)+' s';
   $('aMile').textContent = `${mmss(lap*31)} – ${mmss(lap*34)}`;
