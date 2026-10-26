@@ -65,6 +65,17 @@ a{color:var(--tape);font-weight:600}
 .duelrow{grid-template-columns:minmax(0,1.6fr) repeat(2,minmax(0,1fr))}
 .prow b.lead{color:var(--c)}
 .prow b.lead::after{content:' ◀';font-size:.7em}
+.bars{display:grid;gap:12px}
+.bar{display:grid;grid-template-columns:120px minmax(0,1fr) 15ch;gap:12px;align-items:center}
+.bar .nm{font-weight:700;color:var(--c);line-height:1.1}
+.bar .nm small{display:block;font-weight:500;color:var(--muted);font-size:14px}
+.btrack{position:relative;height:34px;background:var(--floor);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.bfill{position:absolute;inset:0 auto 0 0;background:var(--c);border-radius:5px}
+.btxt{font:600 16px var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.takeaway{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;border:3px solid var(--violet);border-radius:8px;padding:12px 16px}
+.takeaway b{font-family:var(--display);font-weight:900;font-size:clamp(40px,8vw,60px);line-height:1;color:var(--violet)}
+.takeaway p{font-size:19px;font-weight:600;flex:1 1 260px}
+@media (max-width:560px){ .bar{grid-template-columns:1fr auto} .bar .btrack{grid-column:1/-1;grid-row:2} }
 .pick{list-style:none;padding:0;margin:0;display:grid;gap:10px;font-size:18px}
 .pick li{border-left:4px solid var(--pink);padding-left:12px}
 .pick li:last-child{border-color:var(--violet)}
@@ -139,11 +150,12 @@ select{font:600 20px var(--body);padding:6px 8px;border:2px solid var(--rule);bo
 
   <section>
     <h2>Laps or a real mile?</h2>
-    <p>Counting laps and measuring distance are two different races. Here's Diamond against the Mile Line for the same 60 seconds. Watch both columns.</p>
+    <p>Counting laps and measuring distance are two different races. Here's Diamond against the Mile Line for the same 60 seconds. Watch the bars: they show how far each skater has gone.</p>
     <div class="rink">
       <canvas id="cv2" width="900" height="620" aria-label="Diamond and Mile Line skating for 60 seconds"></canvas>
-      <div class="paths" id="duel"></div>
-      <div class="row"><button id="again2" type="button">Skate again</button><p class="banner" id="banner2" aria-live="polite"></p></div>
+      <div class="bars" id="duel"></div>
+      <div class="takeaway"><b id="farther">+98 ft</b><p id="fartherTxt">In the same 60 seconds, the Mile Line goes farther, even though Diamond skates more laps.</p></div>
+      <div class="row"><button id="again2" type="button">Skate again</button></div>
     </div>
     <ul class="pick">
       <li><b>Coach counting laps?</b> Skate the Diamond. Shorter laps, so you get more of them.</li>
@@ -343,10 +355,15 @@ function star2(x,y,r,c){ c2.beginPath(); for(let i=0;i<10;i++){const a=-Math.PI/
 
 function duelRows(tt){
   const r={}; for(const k in duelSk){ const s=duelSk[k], w=where(s,tt); r[k]={w, laps:tt/s.T, feet:tt/s.T*s.L}; } return r; }
+const FINAL={}; for(const k in duelSk){ FINAL[k]=DUR/duelSk[k].T*duelSk[k].L; }
+const BMAX=Math.max(FINAL.pink,FINAL.violet);
+$('duel').innerHTML=['pink','violet'].map(k=>`<div class="bar" style="--c:var(--${k})"><span class="nm">${DNAME[k]}<small>${k==='pink'?'best for laps':'best for a real mile'}</small></span><div class="btrack"><div class="bfill" id="bf_${k}"></div></div><span class="btxt" id="bt_${k}"></span></div>`).join('');
+{ const gap=Math.round(FINAL.violet-FINAL.pink);
+  $('farther').textContent=`+${gap} ft`;
+  $('fartherTxt').textContent=`In the same 60 seconds, the Mile Line goes ${gap} feet farther (${Math.round(FINAL.violet).toLocaleString()} vs ${Math.round(FINAL.pink).toLocaleString()} ft), even though Diamond skates more laps (${(DUR/duelSk.pink.T).toFixed(1)} vs ${(DUR/duelSk.violet.T).toFixed(1)}).`; }
 function duelTable(r){
-  const lapLead = r.pink.laps>=r.violet.laps?'pink':'violet', ftLead = r.pink.feet>=r.violet.feet?'pink':'violet';
-  $('duel').innerHTML = `<div class="prow hd duelrow"><span>Path</span><span>Laps</span><span>Feet</span></div>` +
-    ['pink','violet'].map(k=>`<div class="prow duelrow" style="--c:var(--${k})"><span class="nm">${DNAME[k]}<small>${k==='pink'?'best line for laps':'best line for a measured mile'}</small></span><b class="${lapLead===k?'lead':''}">${r[k].laps.toFixed(1)}</b><b class="${ftLead===k?'lead':''}">${Math.round(r[k].feet).toLocaleString()}</b></div>`).join('');
+  for(const k of ['pink','violet']){ $('bf_'+k).style.width=(r[k].feet/BMAX*100)+'%';
+    $('bt_'+k).textContent=`${Math.round(r[k].feet/10)*10} ft · ${r[k].laps.toFixed(1)} laps`; }
 }
 let t2=0, last2=null, done2=false;
 function frame2(ts){
@@ -358,10 +375,10 @@ function frame2(ts){
   for(const k of ['violet','pink']){ const [px,py]=P(r[k].w.x,r[k].w.y); star2(px,py,13,css('--'+k)); }
   duelTable(r);
   c2.font='700 22px "JetBrains Mono", monospace'; c2.fillStyle=css('--ink'); c2.textAlign='center'; c2.fillText(t2>=DUR?'1:00 of 1:00':`0:${String(Math.floor(t2)).padStart(2,'0')} of 1:00`, OX, OY-24);
-  if(t2>=DUR){ done2=true; $('banner2').textContent=`After 60 seconds, Diamond has more laps, but the Mile Line went ${Math.round(r.violet.feet-r.pink.feet)} feet farther.`; }
+  if(t2>=DUR){ done2=true; }
   requestAnimationFrame(frame2);
 }
-$('again2').onclick=()=>{ t2=0; done2=false; $('banner2').textContent=''; };
+$('again2').onclick=()=>{ t2=0; done2=false; };
 if(matchMedia('(prefers-reduced-motion: reduce)').matches) t2=DUR;
 requestAnimationFrame(frame2);
 { const dMile=MILE/sk.pink.L*sk.pink.T, mMile=MILE/duelSk.violet.L*duelSk.violet.T;
