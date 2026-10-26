@@ -45,6 +45,8 @@ button{font:700 16px var(--body);color:#fff;background:var(--pink);border:0;bord
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--floor)}
 button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .banner{font-size:20px;font-weight:700;min-height:1.5em}
+.spd{display:grid;gap:4px}
+.spdh{font-weight:700;font-size:17px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
 .steps{list-style:none;margin:0;padding:0;display:grid;gap:14px;counter-reset:s}
 .steps li{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start;counter-increment:s}
 .steps li::before{content:counter(s);font-family:var(--display);font-weight:900;font-size:30px;width:44px;height:44px;border-radius:50%;background:var(--pink);color:#fff;display:grid;place-items:center}
@@ -81,14 +83,15 @@ select{font:600 20px var(--body);padding:6px 8px;border:2px solid var(--rule);bo
 
   <section>
     <h2>The race</h2>
-    <p>Four skaters with the exact same legs race 5 laps. The only difference is the path they take. Watch how much longer the outside paths are.</p>
+    <p>Four skaters with the exact same legs race 5 laps. The only difference is the path they take. Hugger and Wide are baselines: nobody really skates like that, but they show the two extremes. Watch the speeds in the turns.</p>
     <div class="rink">
       <canvas id="cv" width="900" height="620" aria-label="Four skaters racing 5 laps on a roller derby track"></canvas>
+      <div class="spd"><p class="spdh">Speed around one lap <span class="note">Watch the dips in the turns</span></p><canvas id="sp" width="900" height="250" aria-label="Each skater's speed around one lap, with the turns shaded"></canvas></div>
       <div class="board">
-        <div class="chip" id="c_blue" style="--c:var(--blue)"><b>Hugger</b><span>Hugs the inside line</span><i id="l_blue">0.0 laps</i></div>
+        <div class="chip" id="c_blue" style="--c:var(--blue)"><b>Hugger</b><span>Baseline: hugs the inside</span><i id="l_blue">0.0 laps</i></div>
         <div class="chip" id="c_pink" style="--c:var(--pink)"><b>Diamond</b><span>Best line for laps</span><i id="l_pink">0.0 laps</i></div>
         <div class="chip" id="c_violet" style="--c:var(--violet)"><b>Mile Diamond</b><span>Best line for a mile</span><i id="l_violet">0.0 laps</i></div>
-        <div class="chip" id="c_orange" style="--c:var(--orange)"><b>Wide</b><span>Stays out wide</span><i id="l_orange">0.0 laps</i></div>
+        <div class="chip" id="c_orange" style="--c:var(--orange)"><b>Wide</b><span>Baseline: stays out wide</span><i id="l_orange">0.0 laps</i></div>
       </div>
       <div class="row"><button id="again" type="button">Race again</button><p class="banner" id="banner" aria-live="polite"></p></div>
     </div>
@@ -240,11 +243,11 @@ const sk = Object.fromEntries(KEYS.map(k=>{
   const off=Math.round(START/STEP), X=new Float64Array(n), Y=new Float64Array(n), V=new Float64Array(n);
   for(let i=0;i<n;i++){ const j=(i+off)%n; X[i]=s.X[j]; Y[i]=s.Y[j]; V[i]=v[j]; }
   const tt=new Float64Array(n+1); for(let i=0;i<n;i++){ const j=(i+1)%n; tt[i+1]=tt[i]+Math.hypot(X[j]-X[i],Y[j]-Y[i])/((V[i]+V[j])/2); }
-  return [k,{X,Y,tt,T:tt[n],L:s.L,n}];
+  return [k,{X,Y,tt,T:tt[n],L:s.L,n,MPH:Array.from(V,v=>v/1.4667)}];
 }));
 const goalT = s => s.T*RACE, finish = Math.max(...KEYS.map(k=>goalT(sk[k])));
 function where(s,t){ const lap=Math.floor(t/s.T), r=t-lap*s.T; let lo=0,hi=s.n; while(hi-lo>1){ const m=(lo+hi)>>1; if(s.tt[m]<=r) lo=m; else hi=m; }
-  const f=(r-s.tt[lo])/((s.tt[lo+1]-s.tt[lo])||1), j=(lo+1)%s.n; return {x:s.X[lo]+(s.X[j]-s.X[lo])*f, y:s.Y[lo]+(s.Y[j]-s.Y[lo])*f, laps:t/s.T}; }
+  const f=(r-s.tt[lo])/((s.tt[lo+1]-s.tt[lo])||1), j=(lo+1)%s.n; return {x:s.X[lo]+(s.X[j]-s.X[lo])*f, y:s.Y[lo]+(s.Y[j]-s.Y[lo])*f, laps:t/s.T, mph:s.MPH[lo]+(s.MPH[j]-s.MPH[lo])*f, frac:(lo+f)/s.n}; }
 
 // ---- drawing ----
 const cv=$('cv'), ctx=cv.getContext('2d'), S=9.2, OX=450, OY=310, P=(x,y)=>[OX+y*S, OY-x*S];
@@ -261,14 +264,37 @@ function paths(){ for(const k of KEYS){ const s=sk[k]; ctx.beginPath(); for(let 
   ctx.globalAlpha=.6; ctx.lineWidth=3; ctx.lineCap='round'; ctx.setLineDash(k==='pink'||k==='violet'?[]:[2,7]); ctx.strokeStyle=css('--'+k); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; } }
 function star(x,y,r,c){ ctx.beginPath(); for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5, rr=i%2?r*.45:r; ctx.lineTo(x+rr*Math.cos(a), y+rr*Math.sin(a));} ctx.closePath(); ctx.fillStyle=c; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle=css('--panel'); ctx.stroke(); }
 
-let t=0, last=null, done=false; const SPEEDUP=3;
+// ---- speed graph: one lap, start line to start line ----
+const sp=$('sp'), sx=sp.getContext('2d'), GL=56, GR=12, GT=14, GB=34;
+const allM=KEYS.flatMap(k=>sk[k].MPH), YLO=Math.floor(Math.min(...allM))-1, YHI=Math.ceil(Math.max(...allM))+1;
+const gx=f=>GL+f*(sp.width-GL-GR), gy=m=>GT+(1-(m-YLO)/(YHI-YLO))*(sp.height-GT-GB);
+const turnFr=[[35-START,35+ARC-START],[70+ARC-START,70+2*ARC-START]].map(([a,b])=>[a/INL,b/INL]);
+function graph(now){
+  sx.clearRect(0,0,sp.width,sp.height);
+  sx.fillStyle=css('--rule'); sx.globalAlpha=.55; turnFr.forEach(([a,b])=>sx.fillRect(gx(a),GT,gx(b)-gx(a),sp.height-GT-GB)); sx.globalAlpha=1;
+  sx.font='700 14px Barlow, sans-serif'; sx.fillStyle=css('--muted'); sx.textAlign='center';
+  turnFr.forEach(([a,b],i)=>sx.fillText(`TURN ${i+1}`, gx((a+b)/2), sp.height-GB+20));
+  sx.fillText('STRAIGHT', gx(turnFr[0][0]/2), sp.height-GB+20); sx.fillText('STRAIGHT', gx((turnFr[0][1]+turnFr[1][0])/2), sp.height-GB+20);
+  sx.textAlign='right'; sx.font='500 13px "JetBrains Mono", monospace';
+  for(let m=Math.ceil(YLO); m<=YHI; m+=2){ sx.fillText(m+' mph', GL-6, gy(m)+4); sx.strokeStyle=css('--rule'); sx.lineWidth=1; sx.beginPath(); sx.moveTo(GL,gy(m)); sx.lineTo(sp.width-GR,gy(m)); sx.stroke(); }
+  for(const k of ['orange','violet','blue','pink']){ const s=sk[k]; sx.beginPath();
+    for(let i=0;i<=s.n;i+=2){ const p=[gx(i/s.n), gy(s.MPH[i%s.n])]; i?sx.lineTo(...p):sx.moveTo(...p); }
+    sx.strokeStyle=css('--'+k); sx.lineWidth=k==='pink'||k==='violet'?3:2; sx.setLineDash(k==='pink'||k==='violet'?[]:[3,5]); sx.stroke(); sx.setLineDash([]); }
+  if(now) for(const k of ['orange','violet','blue','pink']){ const w=now[k]; sx.beginPath(); sx.arc(gx(w.frac),gy(w.mph),6,0,2*Math.PI); sx.fillStyle=css('--'+k); sx.fill(); sx.lineWidth=2; sx.strokeStyle=css('--panel'); sx.stroke(); }
+}
+function tag(px,py,txt,c){ ctx.font='700 14px "JetBrains Mono", monospace'; const w=ctx.measureText(txt).width+10;
+  ctx.fillStyle=c; ctx.globalAlpha=.92; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(px+14,py-10,w,20,4) : ctx.rect(px+14,py-10,w,20); ctx.fill(); ctx.globalAlpha=1;
+  ctx.fillStyle='#fff'; ctx.textAlign='left'; ctx.fillText(txt,px+19,py+5); }
+let t=0, last=null, done=false; const SPEEDUP=2;
 const order=KEYS.slice().sort((a,b)=>goalT(sk[a])-goalT(sk[b]));
 function frame(ts){
   if(last!==null && !done) t+=(ts-last)/1000*SPEEDUP; last=ts;
   track(); paths();
-  for(const k of ['orange','violet','blue','pink']){ const s=sk[k], g=goalT(s), tt=Math.min(t,g), w=where(s,tt);
-    const [px,py]=P(w.x,w.y); star(px,py,13,css('--'+k));
-    $('l_'+k).textContent = tt>=g-1e-6 ? `Done in ${g.toFixed(1)} s` : `${w.laps.toFixed(1)} laps`; }
+  const now={};
+  for(const k of ['orange','violet','blue','pink']){ const s=sk[k], g=goalT(s), tt=Math.min(t,g), w=where(s,tt); now[k]=w;
+    const [px,py]=P(w.x,w.y); star(px,py,13,css('--'+k)); if(tt<g-1e-6) tag(px,py,w.mph.toFixed(1)+' mph',css('--'+k));
+    $('l_'+k).textContent = tt>=g-1e-6 ? `Done in ${g.toFixed(1)} s` : `${w.laps.toFixed(1)} laps · ${w.mph.toFixed(1)} mph`; }
+  graph(now);
   const win=order[0];
   if(t>=goalT(sk[win])){ $('c_'+win).classList.add('win');
     $('banner').textContent = `${NAME[win]} wins! ` + order.slice(1).map(k=>`${NAME[k]} +${(goalT(sk[k])-goalT(sk[win])).toFixed(1)} s`).join(', ') + '.'; }
