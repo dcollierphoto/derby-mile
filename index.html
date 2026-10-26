@@ -118,14 +118,14 @@ select{font:600 20px var(--body);padding:6px 8px;border:2px solid var(--rule);bo
   <section>
     <h2>Your time</h2>
     <div class="calc">
-      <div class="row"><label for="laps">How many laps can you skate in 5 minutes?</label><input id="laps" type="number" min="10" max="50" step="1" value="31"></div>
+      <div class="row"><label for="laps">Laps in 5 minutes</label><input id="laps" type="number" min="1" max="60" step="1" value="31"></div>
+      <div class="row"><label for="path">Skating the</label><select id="path"><option value="pink" selected>Diamond</option><option value="blue">Hugger</option><option value="violet">Mile Diamond</option><option value="orange">Wide</option></select><span class="note">path</span></div>
       <div class="answers">
-        <div class="ans"><b id="aLap">9.7 s</b><span>for each lap</span></div>
-        <div class="ans"><b id="aMile">5:00 – 5:30</b><span>to skate a mile (31 to 34 laps)</span></div>
-        <div class="ans"><b id="aMph">11 – 12</b><span>miles per hour, on average</span></div>
-        <div class="ans"><b id="aMore">0.3 s</b><span>faster per lap gets you one more lap</span></div>
+        <div class="ans"><b id="aLap">–</b><span>seconds per lap</span></div>
+        <div class="ans"><b id="aDist">–</b><span id="aDistSub">how far she went</span></div>
+        <div class="ans"><b id="aMph">–</b><span>average speed</span></div>
       </div>
-      <p class="note">How it works: 5 minutes is 300 seconds. Divide 300 by your laps to get your time per lap. A good derby lap is about 155 to 170 feet long, so a mile (5,280 feet) is about 31 to 34 laps.</p>
+      <p class="note" id="aHow">How it works: 5 minutes is 300 seconds, so divide 300 by the laps.</p>
     </div>
   </section>
 
@@ -293,12 +293,13 @@ function lapsCalc(){
 $('dist').addEventListener('input',lapsCalc); $('unit').addEventListener('change',lapsCalc); lapsCalc();
 
 // ---- your time ----
-function calc(){ const n=+$('laps').value; if(!(n>0)) return; const lap=300/n;
-  $('aLap').textContent = lap.toFixed(1)+' s';
-  $('aMile').textContent = `${mmss(lap*31)} – ${mmss(lap*34)}`;
-  $('aMph').textContent = `${Math.round(n*155/300/1.4667)} – ${Math.round(n*170/300/1.4667)}`;
-  $('aMore').textContent = (lap-300/(n+1)).toFixed(2)+' s'; }
-$('laps').addEventListener('input',calc); calc();
+function calc(){ const n=+$('laps').value; if(!(n>0)) return; const k=$('path').value, L=sk[k].L, ft=n*L, mph=ft/300/1.4667;
+  $('aLap').textContent = (300/n).toFixed(1)+' s';
+  $('aDist').textContent = Math.round(ft).toLocaleString()+' ft';
+  $('aDistSub').textContent = `how far she went (${(ft/MILE).toFixed(2)} miles)`;
+  $('aMph').textContent = mph.toFixed(1)+' mph';
+  $('aHow').textContent = `How it works: 300 seconds ÷ ${n} laps = ${(300/n).toFixed(1)} seconds per lap. One ${NAME[k]} lap is ${Math.round(L)} ft, so ${n} laps is ${Math.round(ft).toLocaleString()} ft.`; }
+$('laps').addEventListener('input',calc); $('path').addEventListener('change',calc); calc();
 })();
 </script>
 
