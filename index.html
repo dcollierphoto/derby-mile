@@ -91,10 +91,9 @@ a{color:var(--tape)}
           <button type="button" data-sp="1">1×</button><button type="button" data-sp="4" aria-pressed="true">4×</button><button type="button" data-sp="16">16×</button>
         </span>
         <button id="restart" type="button">Restart</button>
-        <button id="best" type="button" class="primary">Find fastest line</button>
         <button id="reset" type="button">Reset line</button>
       </div>
-      <p class="note">Drag the white dots to move her line in or out. The dashed line is the line she's aiming for; the colored trail is what she actually skates.</p>
+      <p class="note">The dotted line is the ideal line for her speed. The thin line with white dots is the line she's aiming for; drag the dots to move it. The colored trail is what she actually skates.</p>
     </div>
 
     <div class="side">
@@ -135,7 +134,7 @@ a{color:var(--tape)}
     <div style="display:grid;gap:12px">
       <h2>Where her speed comes from</h2>
       <p>We don't know her top speed, so the page works backward from something she has actually done. Derby skaters are tested on how many laps they can skate in 5 minutes (WFTDA's minimum is 27). Type her number and press Match, and the page finds the top speed that produces that many laps on the line shown, including the standing start and the slowdown.</p>
-      <p>After that, drag the line or press Find fastest line to see what a different line would do with the same legs.</p>
+      <p>After that, the dotted ideal line shows the fastest line for her speed, and you can drag her line to see what a different line would do with the same legs.</p>
     </div>
     <div style="display:grid;gap:12px">
       <h2>How it was figured</h2>
@@ -260,8 +259,10 @@ function drawTrack(){
   ctx.fillText('35 ft straightaway', OX, OY+4); ctx.fillText('direction: counterclockwise', OX, OY+22);
 }
 function drawBase(){
+  if(ideal){ ctx.beginPath(); for(let i=0;i<ideal.X.length;i++){ const p=P(ideal.X[i],ideal.Y[i]); i?ctx.lineTo(...p):ctx.moveTo(...p); } ctx.closePath();
+    ctx.setLineDash([1,7]); ctx.lineCap='round'; ctx.globalAlpha=.85; ctx.strokeStyle=css('--ink'); ctx.lineWidth=3; ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; }
   ctx.beginPath(); for(let i=0;i<steady.X.length;i++){ const p=P(steady.X[i],steady.Y[i]); i?ctx.lineTo(...p):ctx.moveTo(...p); } ctx.closePath();
-  ctx.setLineDash([7,6]); ctx.globalAlpha=.6; ctx.strokeStyle=css('--ink'); ctx.lineWidth=1.6; ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+  ctx.globalAlpha=.45; ctx.strokeStyle=css('--muted'); ctx.lineWidth=1.2; ctx.stroke(); ctx.globalAlpha=1;
   HD.forEach((d,j)=>{ const [x,y]=pointAt(d, base[j]); const [px,py]=P(x,y);
     ctx.beginPath(); ctx.arc(px,py, j===drag?11:9, 0, 2*Math.PI); ctx.fillStyle='#fff'; ctx.fill(); ctx.lineWidth=2.5; ctx.strokeStyle=css('--ink'); ctx.stroke(); });
 }
@@ -304,6 +305,15 @@ function buildTL(){
 }
 
 // ---------- state ----------
+let ideal=null, idealKey=null;
+function computeIdeal(){ const key=vtop.toFixed(3); if(key===idealKey) return; idealKey=key;
+  let b=DEFAULT.slice(), cur=steadyLap(vtop,b).T;
+  for(const step of [2,1,0.5,0.25]){ let improved=true, guard=0;
+    while(improved && guard++<20){ improved=false;
+      for(let j=0;j<KN;j++){ const W=inside(HD[j])[4];
+        for(const dir of [1,-1]){ const c=b.slice(); c[j]=Math.max(0.3,Math.min(W-0.4,c[j]+dir*step)); const tt=steadyLap(vtop,c).T;
+          if(tt<cur-1e-4){ b=c; cur=tt; improved=true; } } } } }
+  ideal=steadyLap(vtop,b); }
 let vtop=13*1.4667, steady, run, T=0, speed=4, playing=!matchMedia('(prefers-reduced-motion: reduce)').matches, last=null, drag=-1;
 const fmt=t=>{const m=Math.floor(t/60), s=t-m*60; return `${m}:${s.toFixed(1).padStart(4,'0')}`;};
 function updateSteady(){
@@ -313,7 +323,7 @@ function updateSteady(){
 }
 function rerun(keep=true){
   const frac = run ? T/run.time : 0;
-  updateSteady(); run=simulate(vtop);
+  updateSteady(); computeIdeal(); run=simulate(vtop);
   const full=run.laps.filter(l=>l.full).map(l=>l.len); colLo=Math.min(...full, steady.L-4); colHi=Math.max(...full, steady.L+4);
   T = keep ? Math.min(frac*run.time, run.time) : 0;
   const lapsTxt = `${Math.floor(run.lapsDone)} laps plus ${Math.round((run.lapsDone%1)*INL*steady.L/INL)} ft`;
@@ -356,18 +366,8 @@ $('play').onclick=()=>{ if(T>=run.time) T=0; playing=!playing; $('play').textCon
 $('restart').onclick=()=>{ T=0; playing=true; $('play').textContent='Pause'; };
 document.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{ speed=+b.dataset.sp; document.querySelectorAll('[data-sp]').forEach(x=>x.setAttribute('aria-pressed',x===b)); });
 $('reset').onclick=()=>{ base=DEFAULT.slice(); rerun(false); playing=true; $('play').textContent='Pause'; };
-$('best').onclick=()=>{ // coordinate search on the 8 dots for this top speed
-  let cur=steadyLap(vtop,base).T;
-  for(const step of [2,1,0.5,0.25]){ let improved=true, guard=0;
-    while(improved && guard++<20){ improved=false;
-      for(let j=0;j<KN;j++){ const W=inside(HD[j])[4];
-        for(const dir of [1,-1]){ const b=base.slice(); b[j]=Math.max(0.3,Math.min(W-0.4,b[j]+dir*step)); const t=steadyLap(vtop,b).T;
-          if(t<cur-1e-4){ base=b; cur=t; improved=true; } } } } }
-  rerun(false); playing=true; $('play').textContent='Pause';
-  $('paceMsg').textContent=`Fastest line for ${(vtop/1.4667).toFixed(1)} mph: ${steady.L.toFixed(0)} ft per lap, ${steady.T.toFixed(2)} s at full speed.`;
-};
 $('match').onclick=()=>{ const n=+$('laps5').value; if(!(n>0)) return; const r=matchPace(n); vtop=r.vtop; $('mph').value=(vtop/1.4667).toFixed(1);
-  $('paceMsg').textContent = r.ok ? `${n} laps in 5 minutes on this line works out to about ${(vtop/1.4667).toFixed(1)} mph top speed on the straights.` : `${n} laps in 5 minutes is faster than this line allows. Try Find fastest line, then Match again.`;
+  $('paceMsg').textContent = r.ok ? `${n} laps in 5 minutes on this line works out to about ${(vtop/1.4667).toFixed(1)} mph top speed on the straights.` : `${n} laps in 5 minutes is faster than this line allows. Try moving her line closer to the inside, then Match again.`;
   rerun(false); playing=true; $('play').textContent='Pause'; };
 $('laps5').addEventListener('keydown',e=>{ if(e.key==='Enter') $('match').click(); });
 $('mph').addEventListener('change',()=>{ const m=+$('mph').value; if(m>0){ vtop=m*1.4667; $('paceMsg').textContent=`Top speed set to ${m.toFixed(1)} mph by hand.`; rerun(false); } });

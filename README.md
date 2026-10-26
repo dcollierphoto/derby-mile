@@ -7,7 +7,7 @@ Live page: https://dcollierphoto.github.io/derby-mile/
 - Drag the dots on the track to change her line
 - Enter how many laps she skates in 5 minutes and press Match to set her speed
 - Set a goal by distance (miles) or by time (minutes)
-- Find fastest line searches for the quickest line at her speed
+- The dotted line shows the ideal line for her speed
 
 Reference laps per mile: inside line 35.5, center of the track 27.4, outside line 22.3.
 
