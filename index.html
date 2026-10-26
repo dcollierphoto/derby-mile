@@ -100,7 +100,7 @@ a{color:var(--tape)}
         <button id="restart" type="button">Restart</button>
         <button id="ideal" type="button" aria-pressed="true">Ideal line</button>
       </div>
-      <p class="note">Faint lines are every lap so far. Blue means she aimed tight, orange means she aimed wide. The dashed line is the perfect diamond for comparison.</p>
+      <p class="note">Her trail is one continuous line: the bright tail is the last lap she skated, and the faint lines underneath are everything before. Blue means she aimed tight, orange means she aimed wide. The dashed line is the perfect diamond for comparison.</p>
     </div>
   </section>
 
@@ -175,18 +175,24 @@ function drawTrack(){
   ctx.fillText('35 ft straightaway', OX, OY+4);
   ctx.fillText('direction: counterclockwise', OX, OY+22);
 }
-// draw path samples a..b in lap colors
-function drawRun(a, b, endPt, k){
-  for(let j=0;j<=k;j++){
-    const s0 = laps[j].i0, s1 = Math.min(j+1<laps.length? laps[j+1].i0 : N-1, b);
-    if (s0 > b) break;
+// one continuous trail: color blends between laps, bright tail fades into the faint history
+const lapOf = new Int16Array(N); { let k=0; for(let i=0;i<N;i++){ while(k+1<laps.length && laps[k+1].i0<=i) k++; lapOf[i]=k; } }
+const colR = (()=>{ const raw=Array.from(lapOf,k=>laps[k].R), out=new Float32Array(N), w=12;
+  for(let i=0;i<N;i++){ let s=0,c=0; for(let j=Math.max(0,i-w);j<=Math.min(N-1,i+w);j++){s+=raw[j];c++;} out[i]=s/c; } return out; })();
+const TAIL = 110; // samples (~165 ft, about one lap)
+function drawRun(a, b, endPt){
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  const CH=4;
+  for(let s0=0; s0<b; s0+=CH){
+    const s1=Math.min(s0+CH,b), age=b-s1;
+    const f = age>TAIL ? 0 : 1-age/TAIL;
     ctx.beginPath(); ctx.moveTo(...P([PATH.x[s0],PATH.y[s0]]));
     for(let i=s0+1;i<=s1;i++) ctx.lineTo(...P([PATH.x[i],PATH.y[i]]));
-    if (j===k) ctx.lineTo(...endPt);
-    const cur = j===k;
-    ctx.globalAlpha = cur? .95 : .22; ctx.lineWidth = cur? 4 : 2; ctx.lineCap='round'; ctx.lineJoin='round';
-    ctx.strokeStyle = rCol(laps[j].R); ctx.stroke(); ctx.globalAlpha=1;
+    if(s1===b) ctx.lineTo(...endPt);
+    ctx.globalAlpha = .2 + .75*f*f; ctx.lineWidth = 2 + 2.2*f;
+    ctx.strokeStyle = rCol(colR[s0]); ctx.stroke();
   }
+  ctx.globalAlpha=1;
 }
 let showIdeal=true;
 function drawIdeal(){ ctx.beginPath(); DATA.ideal.forEach((p,j)=>{ const q=P(p); j?ctx.lineTo(...q):ctx.moveTo(...q); }); ctx.closePath();
@@ -227,7 +233,7 @@ function render(){
   let k = laps.length-1; while(k>0 && laps[k].i0 > i) k--;
   const pt = P([x,y]);
   if(showIdeal) drawIdeal();
-  drawRun(0, i, pt, k);
+  drawRun(0, i, pt);
   star(pt[0],pt[1],13); ctx.fillStyle=css('--star'); ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle=css('--panel'); ctx.stroke();
   const l=laps[k];
   $('lapN').textContent=l.n; $('rSpd').textContent=v.toFixed(1)+' mph'; $('rR').textContent=l.R.toFixed(1)+' ft';
