@@ -1,14 +1,13 @@
 # Derby Mile
 
-A regulation WFTDA roller derby track drawn to scale, with a skater you can tune.
+How to skate a faster roller derby lap.
 
 Live page: https://dcollierphoto.github.io/derby-mile/
 
-- Drag the dots on the track to change her line
-- Enter how many laps she skates in 5 minutes and press Match to set her speed
-- Set a goal by distance (miles) or by time (minutes)
-- The dotted line shows the ideal line for her speed
+- The race: three skaters with the same legs, three different paths
+- Skate the diamond: three steps through a turn
+- Your time: type your laps in 5 minutes to see your time per lap and per mile
 
-Reference laps per mile: inside line 35.5, center of the track 27.4, outside line 22.3.
+Want the details? lab.html is the full simulator (drag the line, set a pace, see every lap).
 
-Track dimensions come from the WFTDA track layout guide. Speeds and lines are a physics model, not measured data.
+Track size comes from the WFTDA track layout guide. Speeds come from a physics model, not measured data.

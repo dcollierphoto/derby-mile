@@ -6,65 +6,57 @@
 <title>Derby Mile</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
 <style>
-/* Layout: sport-court floor; track drawn to WFTDA scale as the hero with draggable line, settings + readout beside it, lap timeline underneath */
+/* Layout: one column lesson. Race on the track first, then three steps, then "your time" calculator */
 :root{
   --floor:#eef0ec; --panel:#f8f9f6; --ink:#1d2421; --muted:#5f6a65; --rule:#cfd5d0;
-  --tape:#1f8a83; --star:#d1366e; --tight:#2a7fb8; --wide:#e08a1e;
+  --tape:#1f8a83; --pink:#d1366e; --blue:#2a7fb8; --orange:#e08a1e;
   --display:"Big Shoulders Display", Impact, "Arial Narrow", sans-serif;
   --body:"Barlow", "Helvetica Neue", Arial, sans-serif;
   --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --floor:#151a18; --panel:#1c2220; --ink:#e7ece9; --muted:#9aa6a0; --rule:#323b37;
-  --tape:#3fc2b8; --star:#ff5c97; --tight:#5aaee6; --wide:#f2a640; color-scheme:dark}}
+  --tape:#3fc2b8; --pink:#ff5c97; --blue:#5aaee6; --orange:#f2a640; color-scheme:dark}}
 :root[data-theme="dark"]{
   --floor:#151a18; --panel:#1c2220; --ink:#e7ece9; --muted:#9aa6a0; --rule:#323b37;
-  --tape:#3fc2b8; --star:#ff5c97; --tight:#5aaee6; --wide:#f2a640; color-scheme:dark}
-body{background:var(--floor);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
-.wrap{max-width:1120px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
-h1{font-family:var(--display);font-weight:900;font-size:clamp(44px,8vw,76px);line-height:.9;margin:0;letter-spacing:.01em;text-transform:uppercase}
-h1 span{color:var(--star)}
-h2{font-family:var(--display);font-weight:700;font-size:26px;text-transform:uppercase;letter-spacing:.03em;margin:0;text-wrap:balance}
-h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0;font-weight:600}
-p{margin:0;max-width:65ch}
-.lede{font-size:18px;color:var(--muted);margin-top:10px}
-.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.fact{border-top:3px solid var(--rule);padding-top:8px}
-.fact.hl{border-color:var(--star)}
-.fact b{display:block;font-family:var(--mono);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
-.fact small{color:var(--muted);font-size:14px}
-.stage{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;align-items:start}
-@media (max-width:820px){.stage{grid-template-columns:1fr}}
-.rink{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:10px;display:grid;gap:8px}
-canvas{display:block;width:100%;height:auto;touch-action:none}
-.side{display:grid;gap:18px;min-width:0}
-.box{display:grid;gap:10px;padding-bottom:16px;border-bottom:1px solid var(--rule)}
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-label{font-size:15px}
-input[type=number]{font:500 16px var(--mono);width:5.5em;padding:5px 7px;border:1px solid var(--rule);border-radius:4px;background:var(--floor);color:var(--ink)}
-input[type=checkbox]{accent-color:var(--star);width:16px;height:16px}
-.seg{display:inline-flex;border:1px solid var(--rule);border-radius:4px;overflow:hidden}
-.seg button{border:0;border-radius:0}
-.read dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
-.read dt{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.08em;align-self:center}
-.read dd{margin:0;font-family:var(--mono);font-size:18px;font-variant-numeric:tabular-nums;text-align:right}
-.result{font-size:17px;font-weight:600}
-.meter{height:10px;background:var(--rule);border-radius:5px;overflow:hidden}
-.meter i{display:block;height:100%;background:var(--star);width:0}
-button{font:600 14px var(--body);color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:7px 12px;cursor:pointer}
-button.primary{background:var(--star);border-color:var(--star);color:#fff}
-button[aria-pressed="true"]{background:var(--ink);color:var(--floor);border-color:var(--ink)}
-button:focus-visible,input:focus-visible{outline:2px solid var(--star);outline-offset:2px}
-.note{font-size:14px;color:var(--muted)}
-.tl{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:12px;overflow-x:auto}
-.tl svg{display:block;min-width:620px;width:100%;height:auto}
-.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--muted);align-items:center}
-.ramp{display:inline-block;width:90px;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--tight),var(--wide));vertical-align:middle;margin:0 6px}
-.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px}
-ul{margin:0;padding-left:18px;display:grid;gap:6px;font-size:15px}
-a{color:var(--tape)}
+  --tape:#3fc2b8; --pink:#ff5c97; --blue:#5aaee6; --orange:#f2a640; color-scheme:dark}
+body{background:var(--floor);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.5}
+.wrap{max-width:920px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:40px}
+h1{font-family:var(--display);font-weight:900;font-size:clamp(48px,9vw,84px);line-height:.9;margin:0;text-transform:uppercase}
+h1 span{color:var(--pink)}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,36px);text-transform:uppercase;letter-spacing:.02em;margin:0;line-height:1}
+p{margin:0;max-width:62ch}
+.lede{font-size:21px;margin-top:10px;color:var(--muted)}
+section{display:grid;gap:16px}
+.rink{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:10px;display:grid;gap:10px}
+canvas{display:block;width:100%;height:auto}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.chip{border-radius:6px;padding:8px 10px;border:2px solid var(--c);display:grid;gap:2px;min-width:0}
+.chip b{font-family:var(--display);font-size:22px;text-transform:uppercase;color:var(--c);line-height:1}
+.chip span{font-size:14px;color:var(--muted)}
+.chip i{font-style:normal;font-family:var(--mono);font-size:18px;font-weight:600}
+.chip.win{background:color-mix(in srgb,var(--c) 14%,transparent)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font:700 16px var(--body);color:#fff;background:var(--pink);border:0;border-radius:6px;padding:10px 16px;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.banner{font-size:20px;font-weight:700;min-height:1.5em}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:14px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start;counter-increment:s}
+.steps li::before{content:counter(s);font-family:var(--display);font-weight:900;font-size:30px;width:44px;height:44px;border-radius:50%;background:var(--pink);color:#fff;display:grid;place-items:center}
+.steps b{display:block;font-size:20px}
+.why{border-left:4px solid var(--tape);padding-left:14px}
+.calc{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:18px;display:grid;gap:16px}
+.calc label{font-size:20px;font-weight:600}
+.calc input{font:600 26px var(--mono);width:4.2em;padding:6px 10px;border:2px solid var(--rule);border-radius:6px;background:var(--floor);color:var(--ink)}
+.answers{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.ans{border-top:4px solid var(--pink);padding-top:8px}
+.ans b{display:block;font-family:var(--mono);font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.ans span{font-size:16px;color:var(--muted)}
+.note{font-size:15px;color:var(--muted)}
+a{color:var(--tape);font-weight:600}
+@media (max-width:520px){ .board{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
@@ -72,88 +64,59 @@ a{color:var(--tape)}
 <div class="wrap">
   <header>
     <h1>Derby <span>Mile</span></h1>
-    <p class="lede">A regulation WFTDA flat track and a skater on it. Drag her line, set her pace from a real lap count, and pick a goal by distance or by time.</p>
+    <p class="lede">How to skate a faster lap, and what your lap count says about your speed.</p>
   </header>
 
-  <section class="facts" aria-label="Laps per mile">
-    <div class="fact"><b>148.5 ft</b><small>Hugging the inside line. 35.5 laps = 1 mile</small></div>
-    <div class="fact hl"><b id="fLine">–</b><small id="fLineSub">Her line right now</small></div>
-    <div class="fact"><b>192.5 ft</b><small>Dead center of the track. 27.4 laps = 1 mile</small></div>
-    <div class="fact"><b>236.5 ft</b><small>Riding the outside line. 22.3 laps = 1 mile</small></div>
-  </section>
-
-  <section class="stage">
+  <section>
+    <h2>The race</h2>
+    <p>Three skaters with the exact same legs race 5 laps. The only difference is the path they take.</p>
     <div class="rink">
-      <canvas id="cv" width="900" height="620" aria-label="Top view of the track. Drag the white dots to change her line."></canvas>
-      <div class="row">
-        <button id="play" type="button">Pause</button>
-        <span class="seg" role="group" aria-label="Playback speed">
-          <button type="button" data-sp="1">1×</button><button type="button" data-sp="4" aria-pressed="true">4×</button><button type="button" data-sp="16">16×</button>
-        </span>
-        <button id="restart" type="button">Restart</button>
-        <button id="reset" type="button">Reset line</button>
-        <button id="useIdeal" type="button">Skate the ideal line</button>
+      <canvas id="cv" width="900" height="620" aria-label="Three skaters racing on a roller derby track"></canvas>
+      <div class="board">
+        <div class="chip" id="cBlue" style="--c:var(--blue)"><b>Hugger</b><span>Hugs the inside line</span><i id="lBlue">0.0 laps</i></div>
+        <div class="chip" id="cPink" style="--c:var(--pink)"><b>Diamond</b><span>Skates the diamond</span><i id="lPink">0.0 laps</i></div>
+        <div class="chip" id="cOrange" style="--c:var(--orange)"><b>Wide</b><span>Stays out wide</span><i id="lOrange">0.0 laps</i></div>
       </div>
-      <div class="row"><span class="note">Dotted line shows the best line for</span>
-        <span class="seg" role="group" aria-label="Ideal line goal"><button type="button" id="iLaps" aria-pressed="true">Most laps</button><button type="button" id="iMile">Fastest mile</button></span></div>
-      <p class="result" id="idealMsg">–</p>
-      <p class="note">The dotted line is the ideal line for her speed. The thin line with white dots is the line she's aiming for; drag the dots to move it. The colored trail is what she actually skates.</p>
-    </div>
-
-    <div class="side">
-      <div class="box">
-        <h3>Her pace</h3>
-        <div class="row"><label for="laps5">Laps in 5 minutes</label><input id="laps5" type="number" min="15" max="45" step="1" value="31"><button id="match" type="button">Match</button></div>
-        <div class="row"><label for="mph">Top speed on straights</label><input id="mph" type="number" min="5" max="25" step="0.1" value="13"><span class="note">mph</span></div>
-        <p class="note" id="paceMsg">Enter her 27-in-5 count and press Match. It sets her top speed so the simulation skates that many laps in 5 minutes.</p>
-      </div>
-      <div class="box">
-        <h3>Goal</h3>
-        <div class="row">
-          <span class="seg" role="group" aria-label="Goal type"><button type="button" id="gDist" aria-pressed="true">Distance</button><button type="button" id="gTime">Time</button></span>
-          <input id="gVal" type="number" min="0.1" step="0.1" value="1"><span class="note" id="gUnit">miles</span>
-        </div>
-        <div class="row"><label><input id="human" type="checkbox" checked> Human wobble</label><label for="fade">Slows by</label><input id="fade" type="number" min="0" max="40" step="1" value="10"><span class="note">% by the end</span></div>
-        <p class="result" id="result">–</p>
-      </div>
-      <div class="read">
-        <dl>
-          <dt>Lap</dt><dd id="rLap">–</dd>
-          <dt>Speed now</dt><dd id="rSpd">–</dd>
-          <dt>Clock</dt><dd id="rClk">0:00.0</dd>
-          <dt>Distance</dt><dd id="rD">0 ft</dd>
-        </dl>
-        <div class="meter" aria-hidden="true" style="margin-top:10px"><i id="mi"></i></div>
-      </div>
+      <div class="row"><button id="again" type="button">Race again</button><p class="banner" id="banner" aria-live="polite"></p></div>
     </div>
   </section>
 
-  <section style="display:grid;gap:10px">
-    <h2>Lap timeline</h2>
-    <div class="legend"><span>Bar height = lap time</span><span>Color = lap length<span class="ramp"></span>short → long</span><span>Tap a bar to jump there</span></div>
-    <div class="tl"><svg id="tl" viewBox="0 0 960 230" role="img" aria-label="Lap times for each lap"></svg></div>
+  <section>
+    <h2>Skate the diamond</h2>
+    <p>Here's what Diamond does, going into each turn:</p>
+    <ol class="steps">
+      <li><div><b>Before the turn, stay a few feet off the inside line.</b>That gives you room to make your turn round instead of sharp.</div></li>
+      <li><div><b>In the middle of the turn, get close to the inside line.</b>That spot is called the apex. Touching close here keeps your lap short.</div></li>
+      <li><div><b>Coming out, drift out a little and push.</b>Let the turn open up and use your strides to power down the straightaway.</div></li>
+    </ol>
+    <p class="why"><b>Why it works:</b> Hugger takes the shortest path, but the turns are so tight she has to slow down. Wide never slows down, but her laps are way longer. Diamond keeps her laps short <em>and</em> her speed up.</p>
   </section>
 
-  <section class="cols">
-    <div style="display:grid;gap:12px">
-      <h2>Where her speed comes from</h2>
-      <p>We don't know her top speed, so the page works backward from something she has actually done. Derby skaters are tested on how many laps they can skate in 5 minutes (WFTDA's minimum is 27). Her best is 31 laps. The page finds the top speed that produces that many laps on the line shown, including the standing start and the slowdown.</p>
-      <p>After that, the dotted ideal line shows the fastest line for her speed, and you can drag her line to see what a different line would do with the same legs.</p>
-    </div>
-    <div style="display:grid;gap:12px">
-      <h2>How it was figured</h2>
-      <ul>
-        <li>Track shape is the official WFTDA layout: inside turns are 12 ft 6 in radius, straightaways are 35 ft, and the track is 13 ft wide going into a turn and 15 ft coming out.</li>
-        <li>She can only lean so hard in a turn. I used 0.6 g of sideways force, so cornering speed grows with the square root of the turn radius. Tighter turns force her to slow down.</li>
-        <li>She speeds up quickly from a stop and more slowly near top speed, and scrubs speed gently, like legs rather than brakes.</li>
-        <li>She starts from a stop at the jammer line and never stops after that. Laps are counted at the jammer line.</li>
-        <li>Most laps means the shortest time per lap. Fastest mile means the highest average speed when real distance is measured, not laps; it picks the shortest line that lets her keep almost all of her speed.</li>
-        <li>Human wobble adds small random drift from lap to lap. The default line already cuts in early on the way into a turn and drifts wide on the way out.</li>
-        <li>These are a model's numbers, not measurements. Her real lap times would make it sharper.</li>
-      </ul>
-      <p class="note">Sources: <a href="https://static.wftda.com/resources/wftda-regulation-track-layout-guide.pdf">WFTDA track layout guide</a>, <a href="https://static.wftda.com/resources/wftda-minimum-skills-assessment-companion.pdf">WFTDA minimum skills companion</a>.</p>
+  <section>
+    <h2>Your time</h2>
+    <div class="calc">
+      <div class="row"><label for="laps">How many laps can you skate in 5 minutes?</label><input id="laps" type="number" min="10" max="50" step="1" value="31"></div>
+      <div class="answers">
+        <div class="ans"><b id="aLap">9.7 s</b><span>for each lap</span></div>
+        <div class="ans"><b id="aMile">5:00 – 5:30</b><span>to skate a mile (31 to 34 laps)</span></div>
+        <div class="ans"><b id="aMph">11 – 12</b><span>miles per hour, on average</span></div>
+        <div class="ans"><b id="aMore">0.3 s</b><span>faster per lap gets you one more lap</span></div>
+      </div>
+      <p class="note">How it works: 5 minutes is 300 seconds. Divide 300 by your laps to get your time per lap. A good derby lap is about 155 to 170 feet long, so a mile (5,280 feet) is about 31 to 34 laps.</p>
     </div>
   </section>
+
+  <section>
+    <h2>Laps in a mile</h2>
+    <p>The track is always the same size, so the path you take decides how long a lap is.</p>
+    <div class="answers">
+      <div class="ans" style="border-color:var(--blue)"><b>35½</b><span>laps hugging the inside</span></div>
+      <div class="ans"><b>31 – 34</b><span>laps on the diamond</span></div>
+      <div class="ans" style="border-color:var(--orange)"><b>22</b><span>laps on the very outside</span></div>
+    </div>
+  </section>
+
+  <p class="note">Want all the math? <a href="lab.html">Open the full simulator</a> to drag the line, set a pace, and see every lap. Track size comes from the official <a href="https://static.wftda.com/resources/wftda-regulation-track-layout-guide.pdf">WFTDA layout guide</a>; the race is a physics model.</p>
 </div>
 
 <script>
@@ -247,164 +210,72 @@ function matchPace(target){
   return {vtop:hi, ok:true};
 }
 
-// ---------- drawing ----------
-const cv=$('cv'), ctx=cv.getContext('2d'), S=9.2, OX=450, OY=310;
-const P=(x,y)=>[OX+y*S, OY-x*S];
-const unP=(px,py)=>[(OY-py)/S,(px-OX)/S];
-function drawTrack(){
-  ctx.clearRect(0,0,cv.width,cv.height);
-  ctx.beginPath();
+
+// ---- race setup: her pace (31 laps in 5 min) ----
+const VT = 13.8*1.4667;
+const LINES = {
+  blue:   Array(8).fill(0.3),
+  pink:   [5,0.7,0.3,0.8, 5,0.7,0.3,0.8],
+  orange: Array(8).fill(11)
+};
+const RACE=5;
+const sk = Object.fromEntries(Object.entries(LINES).map(([k,b])=>{
+  const s=steadyLap(VT,b), n=s.X.length, {v,ds}=speeds(s.X,s.Y,()=>VT,true,false);
+  // shift so each lap starts at the jammer line
+  const off=Math.round(START/STEP), X=new Float64Array(n), Y=new Float64Array(n), V=new Float64Array(n);
+  for(let i=0;i<n;i++){ const j=(i+off)%n; X[i]=s.X[j]; Y[i]=s.Y[j]; V[i]=v[j]; }
+  const tt=new Float64Array(n+1); for(let i=0;i<n;i++){ const j=(i+1)%n; tt[i+1]=tt[i]+Math.hypot(X[j]-X[i],Y[j]-Y[i])/((V[i]+V[j])/2); }
+  return [k,{X,Y,tt,T:tt[n],L:s.L,n}];
+}));
+const finish = Math.max(...Object.values(sk).map(s=>s.T*RACE));
+function where(s,t){ const lap=Math.floor(t/s.T), r=t-lap*s.T; let lo=0,hi=s.n; while(hi-lo>1){ const m=(lo+hi)>>1; if(s.tt[m]<=r) lo=m; else hi=m; }
+  const f=(r-s.tt[lo])/((s.tt[lo+1]-s.tt[lo])||1), j=(lo+1)%s.n; return {x:s.X[lo]+(s.X[j]-s.X[lo])*f, y:s.Y[lo]+(s.Y[j]-s.Y[lo])*f, laps:t/s.T}; }
+
+// ---- drawing ----
+const cv=$('cv'), ctx=cv.getContext('2d'), S=9.2, OX=450, OY=310, P=(x,y)=>[OX+y*S, OY-x*S];
+function track(){
+  ctx.clearRect(0,0,cv.width,cv.height); ctx.beginPath();
   for(let d=0; d<=INL; d+=1){ const [x,y,nx,ny,W]=inside(d); const p=P(x+nx*W,y+ny*W); d?ctx.lineTo(...p):ctx.moveTo(...p); } ctx.closePath();
   for(let d=0; d<=INL; d+=1){ const [x,y]=inside(d); const p=P(x,y); d?ctx.lineTo(...p):ctx.moveTo(...p); } ctx.closePath();
   ctx.fillStyle=css('--floor'); ctx.fill('evenodd'); ctx.lineWidth=3; ctx.strokeStyle=css('--tape'); ctx.stroke();
-  const line=(d,lbl)=>{ const [x,y,nx,ny,W]=inside(d); ctx.beginPath(); ctx.moveTo(...P(x,y)); ctx.lineTo(...P(x+nx*W,y+ny*W)); ctx.strokeStyle=css('--tape'); ctx.lineWidth=3; ctx.stroke();
-    const [lx,ly]=P(x+nx*(W+1.6),y); ctx.fillStyle=css('--muted'); ctx.font='600 13px Barlow, sans-serif'; ctx.textAlign='center'; ctx.fillText(lbl,lx,ly-2); };
-  line(35,'PIVOT'); line(START,'JAMMER');
-  ctx.fillStyle=css('--muted'); ctx.font='500 13px "JetBrains Mono", monospace'; ctx.textAlign='center';
-  ctx.fillText('35 ft straightaway', OX, OY+4); ctx.fillText('direction: counterclockwise', OX, OY+22);
+  const [x,y,nx,ny,W]=inside(START); ctx.beginPath(); ctx.moveTo(...P(x,y)); ctx.lineTo(...P(x+nx*W,y+ny*W)); ctx.lineWidth=4; ctx.strokeStyle=css('--ink'); ctx.stroke();
+  const [lx,ly]=P(x+nx*(W+1.8),y); ctx.fillStyle=css('--muted'); ctx.font='700 15px Barlow, sans-serif'; ctx.textAlign='center'; ctx.fillText('START / FINISH',lx,ly-2);
+  ctx.font='600 15px Barlow, sans-serif'; ctx.fillText('skaters go counterclockwise', OX, OY+6);
 }
-function drawBase(){
-  if(ideal){ ctx.beginPath(); for(let i=0;i<ideal.X.length;i++){ const p=P(ideal.X[i],ideal.Y[i]); i?ctx.lineTo(...p):ctx.moveTo(...p); } ctx.closePath();
-    ctx.setLineDash([1,7]); ctx.lineCap='round'; ctx.globalAlpha=.85; ctx.strokeStyle=css('--ink'); ctx.lineWidth=3; ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; }
-  ctx.beginPath(); for(let i=0;i<steady.X.length;i++){ const p=P(steady.X[i],steady.Y[i]); i?ctx.lineTo(...p):ctx.moveTo(...p); } ctx.closePath();
-  ctx.globalAlpha=.45; ctx.strokeStyle=css('--muted'); ctx.lineWidth=1.2; ctx.stroke(); ctx.globalAlpha=1;
-  HD.forEach((d,j)=>{ const [x,y]=pointAt(d, base[j]); const [px,py]=P(x,y);
-    ctx.beginPath(); ctx.arc(px,py, j===drag?11:9, 0, 2*Math.PI); ctx.fillStyle='#fff'; ctx.fill(); ctx.lineWidth=2.5; ctx.strokeStyle=css('--ink'); ctx.stroke(); });
-}
-const mix=(a,b,f)=>{const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)); const A=p(a),B=p(b); return `rgb(${A.map((x,i)=>Math.round(x+(B[i]-x)*f)).join(',')})`;};
-let colLo=160,colHi=175;
-const lenCol=L=>mix(css('--tight'),css('--wide'),Math.max(0,Math.min(1,(L-colLo)/((colHi-colLo)||1))));
-function drawTrail(b, end){
-  const TAIL=Math.round(165/STEP), CH=6; ctx.lineCap='round'; ctx.lineJoin='round';
-  const per=Math.round(INL/STEP);
-  for(let s0=0;s0<b;s0+=CH){ const s1=Math.min(s0+CH,b), age=b-s1, f=age>TAIL?0:1-age/TAIL;
-    ctx.beginPath(); ctx.moveTo(...P(run.X[s0],run.Y[s0])); for(let i=s0+1;i<=s1;i++) ctx.lineTo(...P(run.X[i],run.Y[i]));
-    if(s1===b) ctx.lineTo(...end);
-    const lap=run.laps[Math.min(run.laps.length-1,Math.floor(s0/per))];
-    ctx.globalAlpha=.2+.75*f*f; ctx.lineWidth=2+2.2*f; ctx.strokeStyle=lenCol(lap.full?lap.len:(colLo+colHi)/2); ctx.stroke(); }
-  ctx.globalAlpha=1;
-}
-function star(x,y,r){ ctx.beginPath(); for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5, rr=i%2?r*.45:r; ctx.lineTo(x+rr*Math.cos(a), y+rr*Math.sin(a));} ctx.closePath(); }
+const COL={blue:'--blue',pink:'--pink',orange:'--orange'};
+function paths(){ for(const k in sk){ const s=sk[k]; ctx.beginPath(); for(let i=0;i<s.n;i++){ const p=P(s.X[i],s.Y[i]); i?ctx.lineTo(...p):ctx.moveTo(...p); } ctx.closePath();
+  ctx.globalAlpha=.55; ctx.lineWidth=k==='pink'?4:2.5; ctx.setLineDash(k==='pink'?[]:[2,7]); ctx.lineCap='round'; ctx.strokeStyle=css(COL[k]); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; } }
+function star(x,y,r,c){ ctx.beginPath(); for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5, rr=i%2?r*.45:r; ctx.lineTo(x+rr*Math.cos(a), y+rr*Math.sin(a));} ctx.closePath(); ctx.fillStyle=c; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle=css('--panel'); ctx.stroke(); }
 
-// ---------- timeline ----------
-const NS='http://www.w3.org/2000/svg', tl=$('tl'), TW=960, TH=230, ml=48, mr=10, mt=14, mb=34;
-let bars=[], head, tmin=9, tmax=11, bw=10;
-const el=(n,a,p=tl)=>{const e=document.createElementNS(NS,n); for(const k in a) e.setAttribute(k,a[k]); p.appendChild(e); return e;};
-const xs=i=>ml+i*bw, ys=t=>mt+(1-(Math.min(Math.max(t,tmin),tmax)-tmin)/(tmax-tmin))*(TH-mt-mb);
-function buildTL(){
-  tl.innerHTML=''; const full=run.laps.filter(l=>l.full); if(!full.length){ bars=[]; head=null; return; }
-  const ts=full.map(l=>l.T); tmin=Math.floor((Math.min(...ts)-0.2)*2)/2; tmax=Math.ceil((Math.max(...ts)+0.2)*2)/2;
-  bw=(TW-ml-mr)/run.laps.length;
-  for(let t=tmin;t<=tmax+1e-6;t+=0.5){ el('line',{x1:ml,x2:TW-mr,y1:ys(t),y2:ys(t),stroke:css('--rule')});
-    el('text',{x:ml-6,y:ys(t)+4,'text-anchor':'end','font-size':12,fill:css('--muted'),'font-family':'JetBrains Mono, monospace'}).textContent=t.toFixed(1)+'s'; }
-  const every = run.laps.length>40?10:5;
-  bars=run.laps.map((l,i)=>{ const g=el('g',{style:'cursor:pointer',tabindex:0,role:'button','aria-label':`Lap ${l.n}: ${l.T.toFixed(2)} seconds`});
-    const h=l.full?l.T:tmin+0.05; const r=el('rect',{x:xs(i)+1.5,y:ys(h),width:Math.max(1,bw-3),height:TH-mb-ys(h),fill:lenCol(l.full?l.len:(colLo+colHi)/2),rx:2},g);
-    if(!l.full) r.setAttribute('opacity',.35);
-    if(l.n%every===0||l.n===1) el('text',{x:xs(i)+bw/2,y:TH-mb+16,'text-anchor':'middle','font-size':12,fill:css('--muted'),'font-family':'JetBrains Mono, monospace'}).textContent=l.n;
-    const go=()=>{ T=run.T[l.i0]+0.01; }; g.addEventListener('click',go); g.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); }});
-    return r; });
-  el('text',{x:xs(1)+4,y:mt+10,'font-size':12,fill:css('--muted'),'font-family':'Barlow, sans-serif'}).textContent='← lap 1 includes the standing start';
-  el('text',{x:TW-mr,y:TH-4,'text-anchor':'end','font-size':12,fill:css('--muted'),'font-family':'Barlow, sans-serif'}).textContent='lap number (last lap stops at the goal)';
-  head=el('line',{y1:mt,y2:TH-mb,stroke:css('--star'),'stroke-width':2.5});
+let t=0, last=null, done=false; const SPEEDUP=3;
+const NAME={blue:'Hugger',pink:'Diamond',orange:'Wide'}, CHIP={blue:'cBlue',pink:'cPink',orange:'cOrange'}, LAB={blue:'lBlue',pink:'lPink',orange:'lOrange'};
+function frame(ts){
+  if(last!==null && !done) t+=(ts-last)/1000*SPEEDUP; last=ts;
+  track(); paths();
+  for(const k of ['orange','blue','pink']){ const s=sk[k], tt=Math.min(t, s.T*RACE), w=where(s, tt);
+    const [px,py]=P(w.x,w.y); star(px,py,k==='pink'?15:12,css(COL[k]));
+    $(LAB[k]).textContent = tt>=s.T*RACE-1e-6 ? `Done in ${(s.T*RACE).toFixed(1)} s` : `${w.laps.toFixed(1)} laps`; }
+  const winner = Object.keys(sk).reduce((a,b)=>sk[a].T<sk[b].T?a:b);
+  if(t>=sk[winner].T*RACE){ $(CHIP[winner]).classList.add('win');
+    const gapB=(sk.blue.T-sk.pink.T)*RACE, gapO=(sk.orange.T-sk.pink.T)*RACE;
+    $('banner').textContent = `${NAME[winner]} wins! Hugger finishes ${gapB.toFixed(1)} seconds later, Wide ${gapO.toFixed(1)} seconds later.`; }
+  if(t>=finish) done=true;
+  requestAnimationFrame(frame);
 }
+$('again').onclick=()=>{ t=0; done=false; $('banner').textContent=''; Object.values(CHIP).forEach(id=>$(id).classList.remove('win')); };
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){ t=finish; }
+requestAnimationFrame(frame);
 
-// ---------- state ----------
-let ideal=null, idealKey=null, idealMode='laps';
-function searchLine(score){ let b=DEFAULT.slice(), cur=score(steadyLap(vtop,b));
-  for(const step of [2,1,0.5,0.25]){ let improved=true, guard=0;
-    while(improved && guard++<30){ improved=false;
-      for(let j=0;j<KN;j++){ const W=inside(HD[j])[4];
-        for(const dir of [1,-1]){ const c=b.slice(); c[j]=Math.max(0.3,Math.min(W-0.4,c[j]+dir*step)); const sc=score(steadyLap(vtop,c));
-          if(sc<cur-1e-7){ b=c; cur=sc; improved=true; } } } } }
-  return b; }
-function computeIdeal(){ const key=vtop.toFixed(3)+idealMode; if(key===idealKey) return; idealKey=key;
-  let b;
-  if(idealMode==='laps') b=searchLine(s=>s.T);            // shortest time per lap
-  else { const f=steadyLap(vtop,searchLine(s=>s.T/s.L+1e-6*s.L)); const target=f.T/f.L*1.005;
-         b=searchLine(s=>s.L+1e5*Math.max(0,s.T/s.L-target)); } // highest average speed, shortest such line
-  ideal=steadyLap(vtop,b); ideal.b=b;
-  const mph=ideal.L/ideal.T/1.4667, mile=MILE*ideal.T/ideal.L;
-  $('idealMsg').textContent = idealMode==='laps'
-    ? `Most-laps line: ${ideal.L.toFixed(0)} ft per lap, ${ideal.T.toFixed(1)} s per lap, about ${(300/ideal.T).toFixed(1)} laps in 5 minutes once she's rolling.`
-    : `Fastest-mile line: ${ideal.L.toFixed(0)} ft per lap, average ${mph.toFixed(1)} mph, ${(MILE/ideal.L).toFixed(1)} laps to a mile, about ${fmt(mile)} once she's rolling.`;
-}
-let vtop=13*1.4667, steady, run, T=0, speed=4, playing=!matchMedia('(prefers-reduced-motion: reduce)').matches, last=null, drag=-1;
-const fmt=t=>{const m=Math.floor(t/60), s=t-m*60; return `${m}:${s.toFixed(1).padStart(4,'0')}`;};
-function updateSteady(){
-  steady=steadyLap(vtop);
-  $('fLine').textContent=steady.L.toFixed(1)+' ft';
-  $('fLineSub').textContent=`Her line right now. ${(MILE/steady.L).toFixed(1)} laps = 1 mile, ${steady.T.toFixed(2)} s per lap at full speed`;
-}
-function rerun(keep=true){
-  const frac = run ? T/run.time : 0;
-  updateSteady(); computeIdeal(); run=simulate(vtop);
-  const full=run.laps.filter(l=>l.full).map(l=>l.len); colLo=Math.min(...full, steady.L-4); colHi=Math.max(...full, steady.L+4);
-  T = keep ? Math.min(frac*run.time, run.time) : 0;
-  const lapsTxt = `${Math.floor(run.lapsDone)} laps plus ${Math.round((run.lapsDone%1)*INL*steady.L/INL)} ft`;
-  $('result').textContent = goal.type==='dist'
-    ? `${goal.val} ${goal.val==1?'mile':'miles'}: ${lapsTxt}, in ${fmt(run.time)}`
-    : `${goal.val} min: ${lapsTxt}, ${(run.dist/MILE).toFixed(2)} miles`;
-  buildTL();
-}
-function render(){
-  drawTrack(); drawBase();
-  let lo=0,hi=run.end; while(hi-lo>1){ const m=(lo+hi)>>1; if(run.T[m]<=T) lo=m; else hi=m; }
-  const f=Math.max(0,Math.min(1,(T-run.T[lo])/((run.T[hi]-run.T[lo])||1)));
-  const x=run.X[lo]+(run.X[hi]-run.X[lo])*f, y=run.Y[lo]+(run.Y[hi]-run.Y[lo])*f, v=run.v[lo]+(run.v[hi]-run.v[lo])*f, d=run.s[lo]+(run.s[hi]-run.s[lo])*f;
-  const pt=P(x,y); drawTrail(lo,pt);
-  star(pt[0],pt[1],13); ctx.fillStyle=css('--star'); ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle=css('--panel'); ctx.stroke();
-  const per=Math.round(INL/STEP), k=Math.min(run.laps.length-1,Math.floor(lo/per)), l=run.laps[k];
-  $('rLap').textContent=`${l.n} of ${run.laps.length}`; $('rSpd').textContent=(v/1.4667).toFixed(1)+' mph';
-  $('rClk').textContent=fmt(T); $('rD').textContent=Math.round(d).toLocaleString()+' ft';
-  const goalAmt = goal.type==='dist' ? d/run.dist : T/run.time; $('mi').style.width=(goalAmt*100)+'%';
-  bars.forEach((b,j)=>{ b.setAttribute('stroke', j===k?css('--ink'):'none'); b.setAttribute('stroke-width',2); });
-  if(head){ const hx=xs(k)+bw*Math.max(0,Math.min(1,(T-run.T[l.i0])/((run.T[l.i1]-run.T[l.i0])||1))); head.setAttribute('x1',hx); head.setAttribute('x2',hx); }
-}
-function tick(ts){ if(last!==null && playing && drag<0){ T+=(ts-last)/1000*speed; if(T>=run.time){ T=run.time; playing=false; $('play').textContent='Play'; } }
-  last=ts; render(); requestAnimationFrame(tick); }
-
-// ---------- dragging ----------
-function canvasXY(e){ const r=cv.getBoundingClientRect(); return [(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]; }
-cv.addEventListener('pointerdown',e=>{ const [px,py]=canvasXY(e); let best=-1,bd=24*cv.width/cv.getBoundingClientRect().width;
-  HD.forEach((d,j)=>{ const [x,y]=pointAt(d,base[j]); const [hx,hy]=P(x,y); const dd=Math.hypot(hx-px,hy-py); if(dd<bd){bd=dd;best=j;} });
-  if(best>=0){ drag=best; cv.setPointerCapture(e.pointerId); e.preventDefault(); } });
-cv.addEventListener('pointermove',e=>{ const [px,py]=canvasXY(e);
-  if(drag<0){ let near=false; HD.forEach((d,j)=>{ const [x,y]=pointAt(d,base[j]); const [hx,hy]=P(x,y); if(Math.hypot(hx-px,hy-py)<18) near=true; }); cv.style.cursor=near?'grab':'default'; return; }
-  const [mx,my]=unP(px,py), [x,y,nx,ny,W]=inside(HD[drag]);
-  base[drag]=Math.max(0.3,Math.min(W-0.4,(mx-x)*nx+(my-y)*ny)); updateSteady(); });
-const endDrag=()=>{ if(drag>=0){ drag=-1; rerun(true); } };
-cv.addEventListener('pointerup',endDrag); cv.addEventListener('pointercancel',endDrag);
-
-// ---------- controls ----------
-$('play').onclick=()=>{ if(T>=run.time) T=0; playing=!playing; $('play').textContent=playing?'Pause':'Play'; };
-$('restart').onclick=()=>{ T=0; playing=true; $('play').textContent='Pause'; };
-document.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{ speed=+b.dataset.sp; document.querySelectorAll('[data-sp]').forEach(x=>x.setAttribute('aria-pressed',x===b)); });
-$('reset').onclick=()=>{ base=DEFAULT.slice(); rerun(false); playing=true; $('play').textContent='Pause'; };
-function setIdeal(m){ idealMode=m; $('iLaps').setAttribute('aria-pressed',m==='laps'); $('iMile').setAttribute('aria-pressed',m==='mile'); computeIdeal(); }
-$('iLaps').onclick=()=>setIdeal('laps'); $('iMile').onclick=()=>setIdeal('mile');
-$('useIdeal').onclick=()=>{ base=ideal.b.slice(); rerun(false); playing=true; $('play').textContent='Pause'; };
-$('match').onclick=()=>{ const n=+$('laps5').value; if(!(n>0)) return; const r=matchPace(n); vtop=r.vtop; $('mph').value=(vtop/1.4667).toFixed(1);
-  $('paceMsg').textContent = r.ok ? `${n} laps in 5 minutes on this line works out to about ${(vtop/1.4667).toFixed(1)} mph top speed on the straights.` : `${n} laps in 5 minutes is faster than this line allows. Try moving her line closer to the inside, then Match again.`;
-  rerun(false); playing=true; $('play').textContent='Pause'; };
-$('laps5').addEventListener('keydown',e=>{ if(e.key==='Enter') $('match').click(); });
-$('mph').addEventListener('change',()=>{ const m=+$('mph').value; if(m>0){ vtop=m*1.4667; $('paceMsg').textContent=`Top speed set to ${m.toFixed(1)} mph by hand.`; rerun(false); } });
-function setGoal(type){ goal.type=type; $('gDist').setAttribute('aria-pressed',type==='dist'); $('gTime').setAttribute('aria-pressed',type==='time');
-  $('gVal').value = type==='dist'?1:5; $('gUnit').textContent = type==='dist'?'miles':'minutes'; goal.val=+$('gVal').value; rerun(false); }
-$('gDist').onclick=()=>setGoal('dist'); $('gTime').onclick=()=>setGoal('time');
-$('gVal').addEventListener('change',()=>{ const v=+$('gVal').value; if(v>0){ goal.val=v; $('gUnit').textContent = goal.type==='dist'?(v==1?'mile':'miles'):(v==1?'minute':'minutes'); rerun(false); } });
-$('human').addEventListener('change',()=>rerun(true));
-$('fade').addEventListener('change',()=>rerun(true));
-
-// ---------- start: match the default 27-in-5 ----------
-vtop=matchPace(31).vtop; $('mph').value=(vtop/1.4667).toFixed(1);
-$('paceMsg').textContent=`Her best: 31 laps in 5 minutes. On this line that's about ${(vtop/1.4667).toFixed(1)} mph on the straights. Change the number and press Match to try another.`;
-rerun(false);
-$('play').textContent=playing?'Pause':'Play'; if(!playing) T=run.time*0.3;
-const retheme=()=>buildTL(); matchMedia('(prefers-color-scheme: dark)').addEventListener('change',retheme);
-new MutationObserver(retheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-requestAnimationFrame(tick);
+// ---- your time ----
+const mmss=s=>{ const m=Math.floor(s/60), r=Math.round(s-m*60); return r===60?`${m+1}:00`:`${m}:${String(r).padStart(2,'0')}`; };
+function calc(){ const n=+$('laps').value; if(!(n>0)) return; const lap=300/n;
+  $('aLap').textContent = lap.toFixed(1)+' s';
+  $('aMile').textContent = `${mmss(lap*31)} – ${mmss(lap*34)}`;
+  $('aMph').textContent = `${Math.round(n*155/300/1.4667)} – ${Math.round(n*170/300/1.4667)}`;
+  $('aMore').textContent = (lap-300/(n+1)).toFixed(2)+' s'; }
+$('laps').addEventListener('input',calc); calc();
 })();
 </script>
+
 </body>
 </html>

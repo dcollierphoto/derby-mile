@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Derby Mile</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sport-court floor; track drawn to WFTDA scale as the hero with draggable line, settings + readout beside it, lap timeline underneath */
+:root{
+  --floor:#eef0ec; --panel:#f8f9f6; --ink:#1d2421; --muted:#5f6a65; --rule:#cfd5d0;
+  --tape:#1f8a83; --star:#d1366e; --tight:#2a7fb8; --wide:#e08a1e;
+  --display:"Big Shoulders Display", Impact, "Arial Narrow", sans-serif;
+  --body:"Barlow", "Helvetica Neue", Arial, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --floor:#151a18; --panel:#1c2220; --ink:#e7ece9; --muted:#9aa6a0; --rule:#323b37;
+  --tape:#3fc2b8; --star:#ff5c97; --tight:#5aaee6; --wide:#f2a640; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --floor:#151a18; --panel:#1c2220; --ink:#e7ece9; --muted:#9aa6a0; --rule:#323b37;
+  --tape:#3fc2b8; --star:#ff5c97; --tight:#5aaee6; --wide:#f2a640; color-scheme:dark}
+body{background:var(--floor);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+h1{font-family:var(--display);font-weight:900;font-size:clamp(44px,8vw,76px);line-height:.9;margin:0;letter-spacing:.01em;text-transform:uppercase}
+h1 span{color:var(--star)}
+h2{font-family:var(--display);font-weight:700;font-size:26px;text-transform:uppercase;letter-spacing:.03em;margin:0;text-wrap:balance}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0;font-weight:600}
+p{margin:0;max-width:65ch}
+.lede{font-size:18px;color:var(--muted);margin-top:10px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.fact{border-top:3px solid var(--rule);padding-top:8px}
+.fact.hl{border-color:var(--star)}
+.fact b{display:block;font-family:var(--mono);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.fact small{color:var(--muted);font-size:14px}
+.stage{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:820px){.stage{grid-template-columns:1fr}}
+.rink{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:10px;display:grid;gap:8px}
+canvas{display:block;width:100%;height:auto;touch-action:none}
+.side{display:grid;gap:18px;min-width:0}
+.box{display:grid;gap:10px;padding-bottom:16px;border-bottom:1px solid var(--rule)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+label{font-size:15px}
+input[type=number]{font:500 16px var(--mono);width:5.5em;padding:5px 7px;border:1px solid var(--rule);border-radius:4px;background:var(--floor);color:var(--ink)}
+input[type=checkbox]{accent-color:var(--star);width:16px;height:16px}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:4px;overflow:hidden}
+.seg button{border:0;border-radius:0}
+.read dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+.read dt{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.08em;align-self:center}
+.read dd{margin:0;font-family:var(--mono);font-size:18px;font-variant-numeric:tabular-nums;text-align:right}
+.result{font-size:17px;font-weight:600}
+.meter{height:10px;background:var(--rule);border-radius:5px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--star);width:0}
+button{font:600 14px var(--body);color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:7px 12px;cursor:pointer}
+button.primary{background:var(--star);border-color:var(--star);color:#fff}
+button[aria-pressed="true"]{background:var(--ink);color:var(--floor);border-color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--star);outline-offset:2px}
+.note{font-size:14px;color:var(--muted)}
+.tl{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:12px;overflow-x:auto}
+.tl svg{display:block;min-width:620px;width:100%;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--muted);align-items:center}
+.ramp{display:inline-block;width:90px;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--tight),var(--wide));vertical-align:middle;margin:0 6px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px}
+ul{margin:0;padding-left:18px;display:grid;gap:6px;font-size:15px}
+a{color:var(--tape)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Derby <span>Mile</span></h1>
+    <p class="lede"><a href="index.html">← Back to the simple version</a><br>A regulation WFTDA flat track and a skater on it. Drag her line, set her pace from a real lap count, and pick a goal by distance or by time.</p>
+  </header>
+
+  <section class="facts" aria-label="Laps per mile">
+    <div class="fact"><b>148.5 ft</b><small>Hugging the inside line. 35.5 laps = 1 mile</small></div>
+    <div class="fact hl"><b id="fLine">–</b><small id="fLineSub">Her line right now</small></div>
+    <div class="fact"><b>192.5 ft</b><small>Dead center of the track. 27.4 laps = 1 mile</small></div>
+    <div class="fact"><b>236.5 ft</b><small>Riding the outside line. 22.3 laps = 1 mile</small></div>
+  </section>
+
+  <section class="stage">
+    <div class="rink">
+      <canvas id="cv" width="900" height="620" aria-label="Top view of the track. Drag the white dots to change her line."></canvas>
+      <div class="row">
+        <button id="play" type="button">Pause</button>
+        <span class="seg" role="group" aria-label="Playback speed">
+          <button type="button" data-sp="1">1×</button><button type="button" data-sp="4" aria-pressed="true">4×</button><button type="button" data-sp="16">16×</button>
+        </span>
+        <button id="restart" type="button">Restart</button>
+        <button id="reset" type="button">Reset line</button>
+        <button id="useIdeal" type="button">Skate the ideal line</button>
+      </div>
+      <div class="row"><span class="note">Dotted line shows the best line for</span>
+        <span class="seg" role="group" aria-label="Ideal line goal"><button type="button" id="iLaps" aria-pressed="true">Most laps</button><button type="button" id="iMile">Fastest mile</button></span></div>
+      <p class="result" id="idealMsg">–</p>
+      <p class="note">The dotted line is the ideal line for her speed. The thin line with white dots is the line she's aiming for; drag the dots to move it. The colored trail is what she actually skates.</p>
+    </div>
+
+    <div class="side">
+      <div class="box">
+        <h3>Her pace</h3>
+        <div class="row"><label for="laps5">Laps in 5 minutes</label><input id="laps5" type="number" min="15" max="45" step="1" value="31"><button id="match" type="button">Match</button></div>
+        <div class="row"><label for="mph">Top speed on straights</label><input id="mph" type="number" min="5" max="25" step="0.1" value="13"><span class="note">mph</span></div>
+        <p class="note" id="paceMsg">Enter her 27-in-5 count and press Match. It sets her top speed so the simulation skates that many laps in 5 minutes.</p>
+      </div>
+      <div class="box">
+        <h3>Goal</h3>
+        <div class="row">
+          <span class="seg" role="group" aria-label="Goal type"><button type="button" id="gDist" aria-pressed="true">Distance</button><button type="button" id="gTime">Time</button></span>
+          <input id="gVal" type="number" min="0.1" step="0.1" value="1"><span class="note" id="gUnit">miles</span>
+        </div>
+        <div class="row"><label><input id="human" type="checkbox" checked> Human wobble</label><label for="fade">Slows by</label><input id="fade" type="number" min="0" max="40" step="1" value="10"><span class="note">% by the end</span></div>
+        <p class="result" id="result">–</p>
+      </div>
+      <div class="read">
+        <dl>
+          <dt>Lap</dt><dd id="rLap">–</dd>
+          <dt>Speed now</dt><dd id="rSpd">–</dd>
+          <dt>Clock</dt><dd id="rClk">0:00.0</dd>
+          <dt>Distance</dt><dd id="rD">0 ft</dd>
+        </dl>
+        <div class="meter" aria-hidden="true" style="margin-top:10px"><i id="mi"></i></div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:grid;gap:10px">
+    <h2>Lap timeline</h2>
+    <div class="legend"><span>Bar height = lap time</span><span>Color = lap length<span class="ramp"></span>short → long</span><span>Tap a bar to jump there</span></div>
+    <div class="tl"><svg id="tl" viewBox="0 0 960 230" role="img" aria-label="Lap times for each lap"></svg></div>
+  </section>
+
+  <section class="cols">
+    <div style="display:grid;gap:12px">
+      <h2>Where her speed comes from</h2>
+      <p>We don't know her top speed, so the page works backward from something she has actually done. Derby skaters are tested on how many laps they can skate in 5 minutes (WFTDA's minimum is 27). Her best is 31 laps. The page finds the top speed that produces that many laps on the line shown, including the standing start and the slowdown.</p>
+      <p>After that, the dotted ideal line shows the fastest line for her speed, and you can drag her line to see what a different line would do with the same legs.</p>
+    </div>
+    <div style="display:grid;gap:12px">
+      <h2>How it was figured</h2>
+      <ul>
+        <li>Track shape is the official WFTDA layout: inside turns are 12 ft 6 in radius, straightaways are 35 ft, and the track is 13 ft wide going into a turn and 15 ft coming out.</li>
+        <li>She can only lean so hard in a turn. I used 0.6 g of sideways force, so cornering speed grows with the square root of the turn radius. Tighter turns force her to slow down.</li>
+        <li>She speeds up quickly from a stop and more slowly near top speed, and scrubs speed gently, like legs rather than brakes.</li>
+        <li>She starts from a stop at the jammer line and never stops after that. Laps are counted at the jammer line.</li>
+        <li>Most laps means the shortest time per lap. Fastest mile means the highest average speed when real distance is measured, not laps; it picks the shortest line that lets her keep almost all of her speed.</li>
+        <li>Human wobble adds small random drift from lap to lap. The default line already cuts in early on the way into a turn and drifts wide on the way out.</li>
+        <li>These are a model's numbers, not measurements. Her real lap times would make it sharper.</li>
+      </ul>
+      <p class="note">Sources: <a href="https://static.wftda.com/resources/wftda-regulation-track-layout-guide.pdf">WFTDA track layout guide</a>, <a href="https://static.wftda.com/resources/wftda-minimum-skills-assessment-companion.pdf">WFTDA minimum skills companion</a>.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const $ = id => document.getElementById(id);
+// ---------- track geometry (feet) ----------
+const R0=12.5, HS=17.5, ARC=Math.PI*R0, INL=70+2*ARC, START=5, MILE=5280, G=32.2;
+function inside(d){ d=((d%INL)+INL)%INL;
+  if(d<35) return [R0,HS-d, 1,0, 15-2*d/35];
+  d-=35; if(d<ARC){const t=d/R0; return [R0*Math.cos(t),-HS-R0*Math.sin(t), Math.cos(t),-Math.sin(t), 13+2*t/Math.PI];}
+  d-=ARC; if(d<35) return [-R0,-HS+d, -1,0, 15-2*d/35];
+  d-=35; const t=d/R0; return [-R0*Math.cos(t),HS+R0*Math.sin(t), -Math.cos(t),Math.sin(t), 13+2*t/Math.PI];
+}
+// handles: straight middle, turn entry, apex, turn exit (x2)
+const HD=[17.5, 35+ARC/6, 35+ARC/2, 35+5*ARC/6]; HD.push(...HD.map(d=>d+INL/2));
+const DEFAULT=[6.0, 3.0, 1.0, 4.5, 6.0, 3.0, 1.0, 4.5];
+let base = DEFAULT.slice();
+const KN=HD.length;
+function knotD(k){ const L=Math.floor(k/KN), j=((k%KN)+KN)%KN; return L*INL + HD[j]; }
+function offsetAt(g, val){ // g = global progress, val(k) = offset at knot k
+  let k = Math.floor(g/INL)*KN; while(knotD(k+1)<=g) k++; while(knotD(k)>g) k--;
+  const t=(g-knotD(k))/(knotD(k+1)-knotD(k));
+  const p0=val(k-1),p1=val(k),p2=val(k+1),p3=val(k+2);
+  return 0.5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t*t+(-p0+3*p1-3*p2+p3)*t*t*t);
+}
+function pointAt(g, w){ const [x,y,nx,ny,W]=inside(g); w=Math.max(0.3,Math.min(W-0.4,w)); return [x+nx*w, y+ny*w]; }
+
+// ---------- physics ----------
+let ALAT=0.6*G;
+const STEP=0.5;
+function curvature(X,Y,periodic){ const n=X.length,k=new Float64Array(n),h=6;
+  const id=i=> periodic? ((i%n)+n)%n : Math.max(0,Math.min(n-1,i));
+  for(let i=0;i<n;i++){ const a=id(i-h),c=id(i+h);
+    const ax=X[a],ay=Y[a],bx=X[i],by=Y[i],cx=X[c],cy=Y[c];
+    const A=Math.hypot(bx-ax,by-ay),B=Math.hypot(cx-bx,cy-by),C=Math.hypot(cx-ax,cy-ay);
+    const cr=Math.abs((bx-ax)*(cy-ay)-(by-ay)*(cx-ax)); k[i]= A&&B&&C ? 2*cr/(A*B*C) : 0; }
+  const o=new Float64Array(n), w=5; for(let i=0;i<n;i++){ let s=0,c=0; for(let j=i-w;j<=i+w;j++){ s+=k[id(j)]; c++; } o[i]=s/c; } return o; }
+const accel = v => Math.min(8, 48/Math.max(v,0.5)), BRAKE=3.5;
+function speeds(X,Y,cap,periodic,fromStop){
+  const n=X.length,k=curvature(X,Y,periodic),v=new Float64Array(n),ds=new Float64Array(n);
+  for(let i=0;i<n;i++){ const j=periodic?(i+1)%n:Math.min(i+1,n-1); ds[i]=Math.hypot(X[j]-X[i],Y[j]-Y[i]); v[i]=Math.min(cap(i), Math.sqrt(ALAT/(k[i]+1e-9))); }
+  if(fromStop) v[0]=0;
+  const passes=periodic?3:1;
+  for(let p=0;p<passes;p++){
+    for(let i=0;i<(periodic?n:n-1);i++){ const j=(i+1)%n; v[j]=Math.min(v[j], Math.sqrt(v[i]*v[i]+2*accel(v[i])*ds[i])); }
+    for(let i=(periodic?n-1:n-2);i>=0;i--){ const j=(i+1)%n; v[i]=Math.min(v[i], Math.sqrt(v[j]*v[j]+2*BRAKE*ds[i])); }
+    if(fromStop) v[0]=0;
+  }
+  return {v,ds};
+}
+// one steady lap of the base line
+function steadyLap(vtop, b=base){
+  const n=Math.round(INL/STEP), X=new Float64Array(n), Y=new Float64Array(n);
+  for(let i=0;i<n;i++){ const g=i*STEP; const [x,y]=pointAt(g, offsetAt(g, k=>b[((k%KN)+KN)%KN])); X[i]=x; Y[i]=y; }
+  const {v,ds}=speeds(X,Y,()=>vtop,true,false); let T=0,L=0;
+  for(let i=0;i<n;i++){ const j=(i+1)%n; T+=ds[i]/((v[i]+v[j])/2); L+=ds[i]; }
+  return {T,L,X,Y};
+}
+// seeded noise
+function rng(seed){ return ()=>{ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+const NOISE=(()=>{ const r=rng(42), a=[]; for(let i=0;i<4000;i++){ const u=r()||1e-9,v=r(); a.push(Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)); } return a; })();
+
+// full run: standing start, fade, wobble; stops at the goal
+let goal={type:'dist', val:1};
+function simulate(vtop, opts={}){
+  const human = opts.human ?? $('human').checked, fade=(opts.fade ?? +$('fade').value)/100;
+  const g=opts.goal || goal, st=steadyLap(vtop);
+  const goalD = g.type==='dist' ? g.val*MILE : null, goalT = g.type==='time' ? g.val*60 : null;
+  const planD = goalD ?? goalT * st.L/st.T;
+  const nLaps = Math.ceil(planD*1.15/st.L)+2, n=Math.round(nLaps*INL/STEP);
+  const X=new Float64Array(n), Y=new Float64Array(n), sd=human?0.6:0;
+  const val=k=>{ const j=((k%KN)+KN)%KN; return base[j] + (k>=KN ? sd*NOISE[(k*7+3)%NOISE.length] : 0); };
+  for(let i=0;i<n;i++){ const gg=START+i*STEP; const [x,y]=pointAt(gg, offsetAt(gg,val)); X[i]=x; Y[i]=y; }
+  // distance along path for fade
+  const sAt=new Float64Array(n); for(let i=1;i<n;i++) sAt[i]=sAt[i-1]+Math.hypot(X[i]-X[i-1],Y[i]-Y[i-1]);
+  const {v,ds}=speeds(X,Y,i=>vtop*(1-fade*Math.min(1,sAt[i]/planD)),false,true);
+  const T=new Float64Array(n); for(let i=1;i<n;i++) T[i]=T[i-1]+ds[i-1]/Math.max((v[i-1]+v[i])/2,0.05);
+  let end=n-1; for(let i=1;i<n;i++){ if((goalD && sAt[i]>=goalD) || (goalT && T[i]>=goalT)){ end=i; break; } }
+  const per=Math.round(INL/STEP), laps=[];
+  for(let L=0; L*per<=end; L++){ const a=L*per, b=Math.min((L+1)*per,end);
+    laps.push({n:L+1, i0:a, i1:b, T:T[b]-T[a], len:sAt[b]-sAt[a], full:(L+1)*per<=end}); }
+  return {X,Y,v,T,s:sAt,end,laps,lapsDone:end/per,dist:sAt[end],time:T[end]};
+}
+// match top speed to laps in 5 minutes (whole run, same settings)
+function matchPace(target){
+  let lo=3, hi=45;
+  const laps5=vt=>simulate(vt,{goal:{type:'time',val:5}}).lapsDone;
+  if(laps5(hi)<target) return {vtop:hi, ok:false};
+  for(let it=0;it<28;it++){ const m=(lo+hi)/2; if(laps5(m)<target) lo=m; else hi=m; }
+  return {vtop:hi, ok:true};
+}
+
+// ---------- drawing ----------
+const cv=$('cv'), ctx=cv.getContext('2d'), S=9.2, OX=450, OY=310;
+const P=(x,y)=>[OX+y*S, OY-x*S];
+const unP=(px,py)=>[(OY-py)/S,(px-OX)/S];
+function drawTrack(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.beginPath();
+  for(let d=0; d<=INL; d+=1){ const [x,y,nx,ny,W]=inside(d); const p=P(x+nx*W,y+ny*W); d?ctx.lineTo(...p):ctx.moveTo(...p); } ctx.closePath();
+  for(let d=0; d<=INL; d+=1){ const [x,y]=inside(d); const p=P(x,y); d?ctx.lineTo(...p):ctx.moveTo(...p); } ctx.closePath();
+  ctx.fillStyle=css('--floor'); ctx.fill('evenodd'); ctx.lineWidth=3; ctx.strokeStyle=css('--tape'); ctx.stroke();
+  const line=(d,lbl)=>{ const [x,y,nx,ny,W]=inside(d); ctx.beginPath(); ctx.moveTo(...P(x,y)); ctx.lineTo(...P(x+nx*W,y+ny*W)); ctx.strokeStyle=css('--tape'); ctx.lineWidth=3; ctx.stroke();
+    const [lx,ly]=P(x+nx*(W+1.6),y); ctx.fillStyle=css('--muted'); ctx.font='600 13px Barlow, sans-serif'; ctx.textAlign='center'; ctx.fillText(lbl,lx,ly-2); };
+  line(35,'PIVOT'); line(START,'JAMMER');
+  ctx.fillStyle=css('--muted'); ctx.font='500 13px "JetBrains Mono", monospace'; ctx.textAlign='center';
+  ctx.fillText('35 ft straightaway', OX, OY+4); ctx.fillText('direction: counterclockwise', OX, OY+22);
+}
+function drawBase(){
+  if(ideal){ ctx.beginPath(); for(let i=0;i<ideal.X.length;i++){ const p=P(ideal.X[i],ideal.Y[i]); i?ctx.lineTo(...p):ctx.moveTo(...p); } ctx.closePath();
+    ctx.setLineDash([1,7]); ctx.lineCap='round'; ctx.globalAlpha=.85; ctx.strokeStyle=css('--ink'); ctx.lineWidth=3; ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; }
+  ctx.beginPath(); for(let i=0;i<steady.X.length;i++){ const p=P(steady.X[i],steady.Y[i]); i?ctx.lineTo(...p):ctx.moveTo(...p); } ctx.closePath();
+  ctx.globalAlpha=.45; ctx.strokeStyle=css('--muted'); ctx.lineWidth=1.2; ctx.stroke(); ctx.globalAlpha=1;
+  HD.forEach((d,j)=>{ const [x,y]=pointAt(d, base[j]); const [px,py]=P(x,y);
+    ctx.beginPath(); ctx.arc(px,py, j===drag?11:9, 0, 2*Math.PI); ctx.fillStyle='#fff'; ctx.fill(); ctx.lineWidth=2.5; ctx.strokeStyle=css('--ink'); ctx.stroke(); });
+}
+const mix=(a,b,f)=>{const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)); const A=p(a),B=p(b); return `rgb(${A.map((x,i)=>Math.round(x+(B[i]-x)*f)).join(',')})`;};
+let colLo=160,colHi=175;
+const lenCol=L=>mix(css('--tight'),css('--wide'),Math.max(0,Math.min(1,(L-colLo)/((colHi-colLo)||1))));
+function drawTrail(b, end){
+  const TAIL=Math.round(165/STEP), CH=6; ctx.lineCap='round'; ctx.lineJoin='round';
+  const per=Math.round(INL/STEP);
+  for(let s0=0;s0<b;s0+=CH){ const s1=Math.min(s0+CH,b), age=b-s1, f=age>TAIL?0:1-age/TAIL;
+    ctx.beginPath(); ctx.moveTo(...P(run.X[s0],run.Y[s0])); for(let i=s0+1;i<=s1;i++) ctx.lineTo(...P(run.X[i],run.Y[i]));
+    if(s1===b) ctx.lineTo(...end);
+    const lap=run.laps[Math.min(run.laps.length-1,Math.floor(s0/per))];
+    ctx.globalAlpha=.2+.75*f*f; ctx.lineWidth=2+2.2*f; ctx.strokeStyle=lenCol(lap.full?lap.len:(colLo+colHi)/2); ctx.stroke(); }
+  ctx.globalAlpha=1;
+}
+function star(x,y,r){ ctx.beginPath(); for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5, rr=i%2?r*.45:r; ctx.lineTo(x+rr*Math.cos(a), y+rr*Math.sin(a));} ctx.closePath(); }
+
+// ---------- timeline ----------
+const NS='http://www.w3.org/2000/svg', tl=$('tl'), TW=960, TH=230, ml=48, mr=10, mt=14, mb=34;
+let bars=[], head, tmin=9, tmax=11, bw=10;
+const el=(n,a,p=tl)=>{const e=document.createElementNS(NS,n); for(const k in a) e.setAttribute(k,a[k]); p.appendChild(e); return e;};
+const xs=i=>ml+i*bw, ys=t=>mt+(1-(Math.min(Math.max(t,tmin),tmax)-tmin)/(tmax-tmin))*(TH-mt-mb);
+function buildTL(){
+  tl.innerHTML=''; const full=run.laps.filter(l=>l.full); if(!full.length){ bars=[]; head=null; return; }
+  const ts=full.map(l=>l.T); tmin=Math.floor((Math.min(...ts)-0.2)*2)/2; tmax=Math.ceil((Math.max(...ts)+0.2)*2)/2;
+  bw=(TW-ml-mr)/run.laps.length;
+  for(let t=tmin;t<=tmax+1e-6;t+=0.5){ el('line',{x1:ml,x2:TW-mr,y1:ys(t),y2:ys(t),stroke:css('--rule')});
+    el('text',{x:ml-6,y:ys(t)+4,'text-anchor':'end','font-size':12,fill:css('--muted'),'font-family':'JetBrains Mono, monospace'}).textContent=t.toFixed(1)+'s'; }
+  const every = run.laps.length>40?10:5;
+  bars=run.laps.map((l,i)=>{ const g=el('g',{style:'cursor:pointer',tabindex:0,role:'button','aria-label':`Lap ${l.n}: ${l.T.toFixed(2)} seconds`});
+    const h=l.full?l.T:tmin+0.05; const r=el('rect',{x:xs(i)+1.5,y:ys(h),width:Math.max(1,bw-3),height:TH-mb-ys(h),fill:lenCol(l.full?l.len:(colLo+colHi)/2),rx:2},g);
+    if(!l.full) r.setAttribute('opacity',.35);
+    if(l.n%every===0||l.n===1) el('text',{x:xs(i)+bw/2,y:TH-mb+16,'text-anchor':'middle','font-size':12,fill:css('--muted'),'font-family':'JetBrains Mono, monospace'}).textContent=l.n;
+    const go=()=>{ T=run.T[l.i0]+0.01; }; g.addEventListener('click',go); g.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); }});
+    return r; });
+  el('text',{x:xs(1)+4,y:mt+10,'font-size':12,fill:css('--muted'),'font-family':'Barlow, sans-serif'}).textContent='← lap 1 includes the standing start';
+  el('text',{x:TW-mr,y:TH-4,'text-anchor':'end','font-size':12,fill:css('--muted'),'font-family':'Barlow, sans-serif'}).textContent='lap number (last lap stops at the goal)';
+  head=el('line',{y1:mt,y2:TH-mb,stroke:css('--star'),'stroke-width':2.5});
+}
+
+// ---------- state ----------
+let ideal=null, idealKey=null, idealMode='laps';
+function searchLine(score){ let b=DEFAULT.slice(), cur=score(steadyLap(vtop,b));
+  for(const step of [2,1,0.5,0.25]){ let improved=true, guard=0;
+    while(improved && guard++<30){ improved=false;
+      for(let j=0;j<KN;j++){ const W=inside(HD[j])[4];
+        for(const dir of [1,-1]){ const c=b.slice(); c[j]=Math.max(0.3,Math.min(W-0.4,c[j]+dir*step)); const sc=score(steadyLap(vtop,c));
+          if(sc<cur-1e-7){ b=c; cur=sc; improved=true; } } } } }
+  return b; }
+function computeIdeal(){ const key=vtop.toFixed(3)+idealMode; if(key===idealKey) return; idealKey=key;
+  let b;
+  if(idealMode==='laps') b=searchLine(s=>s.T);            // shortest time per lap
+  else { const f=steadyLap(vtop,searchLine(s=>s.T/s.L+1e-6*s.L)); const target=f.T/f.L*1.005;
+         b=searchLine(s=>s.L+1e5*Math.max(0,s.T/s.L-target)); } // highest average speed, shortest such line
+  ideal=steadyLap(vtop,b); ideal.b=b;
+  const mph=ideal.L/ideal.T/1.4667, mile=MILE*ideal.T/ideal.L;
+  $('idealMsg').textContent = idealMode==='laps'
+    ? `Most-laps line: ${ideal.L.toFixed(0)} ft per lap, ${ideal.T.toFixed(1)} s per lap, about ${(300/ideal.T).toFixed(1)} laps in 5 minutes once she's rolling.`
+    : `Fastest-mile line: ${ideal.L.toFixed(0)} ft per lap, average ${mph.toFixed(1)} mph, ${(MILE/ideal.L).toFixed(1)} laps to a mile, about ${fmt(mile)} once she's rolling.`;
+}
+let vtop=13*1.4667, steady, run, T=0, speed=4, playing=!matchMedia('(prefers-reduced-motion: reduce)').matches, last=null, drag=-1;
+const fmt=t=>{const m=Math.floor(t/60), s=t-m*60; return `${m}:${s.toFixed(1).padStart(4,'0')}`;};
+function updateSteady(){
+  steady=steadyLap(vtop);
+  $('fLine').textContent=steady.L.toFixed(1)+' ft';
+  $('fLineSub').textContent=`Her line right now. ${(MILE/steady.L).toFixed(1)} laps = 1 mile, ${steady.T.toFixed(2)} s per lap at full speed`;
+}
+function rerun(keep=true){
+  const frac = run ? T/run.time : 0;
+  updateSteady(); computeIdeal(); run=simulate(vtop);
+  const full=run.laps.filter(l=>l.full).map(l=>l.len); colLo=Math.min(...full, steady.L-4); colHi=Math.max(...full, steady.L+4);
+  T = keep ? Math.min(frac*run.time, run.time) : 0;
+  const lapsTxt = `${Math.floor(run.lapsDone)} laps plus ${Math.round((run.lapsDone%1)*INL*steady.L/INL)} ft`;
+  $('result').textContent = goal.type==='dist'
+    ? `${goal.val} ${goal.val==1?'mile':'miles'}: ${lapsTxt}, in ${fmt(run.time)}`
+    : `${goal.val} min: ${lapsTxt}, ${(run.dist/MILE).toFixed(2)} miles`;
+  buildTL();
+}
+function render(){
+  drawTrack(); drawBase();
+  let lo=0,hi=run.end; while(hi-lo>1){ const m=(lo+hi)>>1; if(run.T[m]<=T) lo=m; else hi=m; }
+  const f=Math.max(0,Math.min(1,(T-run.T[lo])/((run.T[hi]-run.T[lo])||1)));
+  const x=run.X[lo]+(run.X[hi]-run.X[lo])*f, y=run.Y[lo]+(run.Y[hi]-run.Y[lo])*f, v=run.v[lo]+(run.v[hi]-run.v[lo])*f, d=run.s[lo]+(run.s[hi]-run.s[lo])*f;
+  const pt=P(x,y); drawTrail(lo,pt);
+  star(pt[0],pt[1],13); ctx.fillStyle=css('--star'); ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle=css('--panel'); ctx.stroke();
+  const per=Math.round(INL/STEP), k=Math.min(run.laps.length-1,Math.floor(lo/per)), l=run.laps[k];
+  $('rLap').textContent=`${l.n} of ${run.laps.length}`; $('rSpd').textContent=(v/1.4667).toFixed(1)+' mph';
+  $('rClk').textContent=fmt(T); $('rD').textContent=Math.round(d).toLocaleString()+' ft';
+  const goalAmt = goal.type==='dist' ? d/run.dist : T/run.time; $('mi').style.width=(goalAmt*100)+'%';
+  bars.forEach((b,j)=>{ b.setAttribute('stroke', j===k?css('--ink'):'none'); b.setAttribute('stroke-width',2); });
+  if(head){ const hx=xs(k)+bw*Math.max(0,Math.min(1,(T-run.T[l.i0])/((run.T[l.i1]-run.T[l.i0])||1))); head.setAttribute('x1',hx); head.setAttribute('x2',hx); }
+}
+function tick(ts){ if(last!==null && playing && drag<0){ T+=(ts-last)/1000*speed; if(T>=run.time){ T=run.time; playing=false; $('play').textContent='Play'; } }
+  last=ts; render(); requestAnimationFrame(tick); }
+
+// ---------- dragging ----------
+function canvasXY(e){ const r=cv.getBoundingClientRect(); return [(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]; }
+cv.addEventListener('pointerdown',e=>{ const [px,py]=canvasXY(e); let best=-1,bd=24*cv.width/cv.getBoundingClientRect().width;
+  HD.forEach((d,j)=>{ const [x,y]=pointAt(d,base[j]); const [hx,hy]=P(x,y); const dd=Math.hypot(hx-px,hy-py); if(dd<bd){bd=dd;best=j;} });
+  if(best>=0){ drag=best; cv.setPointerCapture(e.pointerId); e.preventDefault(); } });
+cv.addEventListener('pointermove',e=>{ const [px,py]=canvasXY(e);
+  if(drag<0){ let near=false; HD.forEach((d,j)=>{ const [x,y]=pointAt(d,base[j]); const [hx,hy]=P(x,y); if(Math.hypot(hx-px,hy-py)<18) near=true; }); cv.style.cursor=near?'grab':'default'; return; }
+  const [mx,my]=unP(px,py), [x,y,nx,ny,W]=inside(HD[drag]);
+  base[drag]=Math.max(0.3,Math.min(W-0.4,(mx-x)*nx+(my-y)*ny)); updateSteady(); });
+const endDrag=()=>{ if(drag>=0){ drag=-1; rerun(true); } };
+cv.addEventListener('pointerup',endDrag); cv.addEventListener('pointercancel',endDrag);
+
+// ---------- controls ----------
+$('play').onclick=()=>{ if(T>=run.time) T=0; playing=!playing; $('play').textContent=playing?'Pause':'Play'; };
+$('restart').onclick=()=>{ T=0; playing=true; $('play').textContent='Pause'; };
+document.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{ speed=+b.dataset.sp; document.querySelectorAll('[data-sp]').forEach(x=>x.setAttribute('aria-pressed',x===b)); });
+$('reset').onclick=()=>{ base=DEFAULT.slice(); rerun(false); playing=true; $('play').textContent='Pause'; };
+function setIdeal(m){ idealMode=m; $('iLaps').setAttribute('aria-pressed',m==='laps'); $('iMile').setAttribute('aria-pressed',m==='mile'); computeIdeal(); }
+$('iLaps').onclick=()=>setIdeal('laps'); $('iMile').onclick=()=>setIdeal('mile');
+$('useIdeal').onclick=()=>{ base=ideal.b.slice(); rerun(false); playing=true; $('play').textContent='Pause'; };
+$('match').onclick=()=>{ const n=+$('laps5').value; if(!(n>0)) return; const r=matchPace(n); vtop=r.vtop; $('mph').value=(vtop/1.4667).toFixed(1);
+  $('paceMsg').textContent = r.ok ? `${n} laps in 5 minutes on this line works out to about ${(vtop/1.4667).toFixed(1)} mph top speed on the straights.` : `${n} laps in 5 minutes is faster than this line allows. Try moving her line closer to the inside, then Match again.`;
+  rerun(false); playing=true; $('play').textContent='Pause'; };
+$('laps5').addEventListener('keydown',e=>{ if(e.key==='Enter') $('match').click(); });
+$('mph').addEventListener('change',()=>{ const m=+$('mph').value; if(m>0){ vtop=m*1.4667; $('paceMsg').textContent=`Top speed set to ${m.toFixed(1)} mph by hand.`; rerun(false); } });
+function setGoal(type){ goal.type=type; $('gDist').setAttribute('aria-pressed',type==='dist'); $('gTime').setAttribute('aria-pressed',type==='time');
+  $('gVal').value = type==='dist'?1:5; $('gUnit').textContent = type==='dist'?'miles':'minutes'; goal.val=+$('gVal').value; rerun(false); }
+$('gDist').onclick=()=>setGoal('dist'); $('gTime').onclick=()=>setGoal('time');
+$('gVal').addEventListener('change',()=>{ const v=+$('gVal').value; if(v>0){ goal.val=v; $('gUnit').textContent = goal.type==='dist'?(v==1?'mile':'miles'):(v==1?'minute':'minutes'); rerun(false); } });
+$('human').addEventListener('change',()=>rerun(true));
+$('fade').addEventListener('change',()=>rerun(true));
+
+// ---------- start: match the default 27-in-5 ----------
+vtop=matchPace(31).vtop; $('mph').value=(vtop/1.4667).toFixed(1);
+$('paceMsg').textContent=`Her best: 31 laps in 5 minutes. On this line that's about ${(vtop/1.4667).toFixed(1)} mph on the straights. Change the number and press Match to try another.`;
+rerun(false);
+$('play').textContent=playing?'Pause':'Play'; if(!playing) T=run.time*0.3;
+const retheme=()=>buildTL(); matchMedia('(prefers-color-scheme: dark)').addEventListener('change',retheme);
+new MutationObserver(retheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>
