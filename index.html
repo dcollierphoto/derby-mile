@@ -78,11 +78,11 @@ a{color:var(--tape);font-weight:600}
       <canvas id="cv" width="900" height="620" aria-label="Three skaters racing on a roller derby track"></canvas>
       <div class="board">
         <div class="chip" id="cBlue" style="--c:var(--blue)"><b>Hugger</b><span>Hugs the inside line</span><i id="lBlue">0.0 laps</i></div>
-        <div class="chip" id="cPink" style="--c:var(--pink)"><b>Diamond</b><span>Skates the diamond</span><i id="lPink">0.0 laps</i></div>
+        <div class="chip" id="cPink" style="--c:var(--pink)"><b>Diamond</b><span id="pinkCap">Skates the diamond</span><i id="lPink">0.0 laps</i></div>
         <div class="chip" id="cOrange" style="--c:var(--orange)"><b>Wide</b><span>Stays out wide</span><i id="lOrange">0.0 laps</i></div>
       </div>
       <div class="row"><button id="again" type="button">Race again</button><p class="banner" id="banner" aria-live="polite"></p></div>
-      <p class="why" id="mileTip" hidden><b>Skating a mile?</b> If the mile is measured by real distance, stay a few feet out the whole way, even in the turns, so you never have to slow down. Fewer, longer laps win. If your coach counts laps instead, skate the diamond.</p>
+      <p class="why" id="mileTip" hidden><b>The mile diamond:</b> For a mile measured by distance, Diamond swings her diamond wider: about 12 ft out on the straightaways and about 6 ft off the inside in the middle of each turn. That's just wide enough that she never has to slow down. She and Wide finish almost together, because going any wider than that doesn't make you faster. Her laps are about 194 ft, so a mile is about 27 laps. If your coach counts laps instead, use the regular diamond.</p>
     </div>
   </section>
 
@@ -225,7 +225,8 @@ const LINES = {
   orange: Array(8).fill(11)
 };
 const RACE=5;
-const sk = Object.fromEntries(Object.entries(LINES).map(([k,b])=>{
+const MILE_PINK=[11.8,7,6,7.5, 11.8,7,6,7.5];  // ideal diamond for a measured mile at her pace
+const build = lines => Object.fromEntries(Object.entries(lines).map(([k,b])=>{
   const s=steadyLap(VT,b), n=s.X.length, {v,ds}=speeds(s.X,s.Y,()=>VT,true,false);
   // shift so each lap starts at the jammer line
   const off=Math.round(START/STEP), X=new Float64Array(n), Y=new Float64Array(n), V=new Float64Array(n);
@@ -233,6 +234,8 @@ const sk = Object.fromEntries(Object.entries(LINES).map(([k,b])=>{
   const tt=new Float64Array(n+1); for(let i=0;i<n;i++){ const j=(i+1)%n; tt[i+1]=tt[i]+Math.hypot(X[j]-X[i],Y[j]-Y[i])/((V[i]+V[j])/2); }
   return [k,{X,Y,tt,T:tt[n],L:s.L,n}];
 }));
+const SK_LAPS=build(LINES), SK_MILE=build({...LINES, pink:MILE_PINK});
+let sk=SK_LAPS;
 let mode='laps';
 const goalT = s => mode==='laps' ? s.T*RACE : MILE*s.T/s.L;
 let finish = Math.max(...Object.values(sk).map(goalT));
@@ -266,14 +269,14 @@ function frame(ts){
     $(LAB[k]).textContent = tt>=g-1e-6 ? doneTxt : (mode==='laps' ? `${w.laps.toFixed(1)} laps` : `${Math.round(w.laps*s.L).toLocaleString()} ft`); }
   const order = Object.keys(sk).sort((a,b)=>goalT(sk[a])-goalT(sk[b])), winner=order[0];
   if(t>=goalT(sk[winner])){ $(CHIP[winner]).classList.add('win');
-    const gap=k=>{ const d=goalT(sk[k])-goalT(sk[winner]); return mode==='laps'? d.toFixed(1)+' seconds' : Math.round(d)+' seconds'; };
+    const gap=k=>{ const d=goalT(sk[k])-goalT(sk[winner]); return d.toFixed(1)+' seconds'; };
     $('banner').textContent = `${NAME[winner]} wins! ${NAME[order[1]]} finishes ${gap(order[1])} later, ${NAME[order[2]]} ${gap(order[2])} later.`; }
   if(t>=finish) done=true;
   requestAnimationFrame(frame);
 }
 const restart=()=>{ t=0; done=false; $('banner').textContent=''; Object.values(CHIP).forEach(id=>$(id).classList.remove('win')); };
 $('again').onclick=restart;
-function setMode(m){ mode=m; finish=Math.max(...Object.values(sk).map(goalT));
+function setMode(m){ mode=m; sk = m==='laps'?SK_LAPS:SK_MILE; $('pinkCap').textContent = m==='laps'?'Skates the diamond':'Skates the mile diamond'; finish=Math.max(...Object.values(sk).map(goalT));
   $('mLaps').setAttribute('aria-pressed',m==='laps'); $('mMile').setAttribute('aria-pressed',m==='mile');
   $('intro').textContent = m==='laps'
     ? 'Three skaters with the exact same legs race 5 laps. The only difference is the path they take.'
