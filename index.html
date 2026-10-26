@@ -92,7 +92,11 @@ a{color:var(--tape)}
         </span>
         <button id="restart" type="button">Restart</button>
         <button id="reset" type="button">Reset line</button>
+        <button id="useIdeal" type="button">Skate the ideal line</button>
       </div>
+      <div class="row"><span class="note">Dotted line shows the best line for</span>
+        <span class="seg" role="group" aria-label="Ideal line goal"><button type="button" id="iLaps" aria-pressed="true">Most laps</button><button type="button" id="iMile">Fastest mile</button></span></div>
+      <p class="result" id="idealMsg">–</p>
       <p class="note">The dotted line is the ideal line for her speed. The thin line with white dots is the line she's aiming for; drag the dots to move it. The colored trail is what she actually skates.</p>
     </div>
 
@@ -143,6 +147,7 @@ a{color:var(--tape)}
         <li>She can only lean so hard in a turn. I used 0.6 g of sideways force, so cornering speed grows with the square root of the turn radius. Tighter turns force her to slow down.</li>
         <li>She speeds up quickly from a stop and more slowly near top speed, and scrubs speed gently, like legs rather than brakes.</li>
         <li>She starts from a stop at the jammer line and never stops after that. Laps are counted at the jammer line.</li>
+        <li>Most laps means the shortest time per lap. Fastest mile means the highest average speed when real distance is measured, not laps; it picks the shortest line that lets her keep almost all of her speed.</li>
         <li>Human wobble adds small random drift from lap to lap. The default line already cuts in early on the way into a turn and drifts wide on the way out.</li>
         <li>These are a model's numbers, not measurements. Her real lap times would make it sharper.</li>
       </ul>
@@ -305,15 +310,25 @@ function buildTL(){
 }
 
 // ---------- state ----------
-let ideal=null, idealKey=null;
-function computeIdeal(){ const key=vtop.toFixed(3); if(key===idealKey) return; idealKey=key;
-  let b=DEFAULT.slice(), cur=steadyLap(vtop,b).T;
+let ideal=null, idealKey=null, idealMode='laps';
+function searchLine(score){ let b=DEFAULT.slice(), cur=score(steadyLap(vtop,b));
   for(const step of [2,1,0.5,0.25]){ let improved=true, guard=0;
-    while(improved && guard++<20){ improved=false;
+    while(improved && guard++<30){ improved=false;
       for(let j=0;j<KN;j++){ const W=inside(HD[j])[4];
-        for(const dir of [1,-1]){ const c=b.slice(); c[j]=Math.max(0.3,Math.min(W-0.4,c[j]+dir*step)); const tt=steadyLap(vtop,c).T;
-          if(tt<cur-1e-4){ b=c; cur=tt; improved=true; } } } } }
-  ideal=steadyLap(vtop,b); }
+        for(const dir of [1,-1]){ const c=b.slice(); c[j]=Math.max(0.3,Math.min(W-0.4,c[j]+dir*step)); const sc=score(steadyLap(vtop,c));
+          if(sc<cur-1e-7){ b=c; cur=sc; improved=true; } } } } }
+  return b; }
+function computeIdeal(){ const key=vtop.toFixed(3)+idealMode; if(key===idealKey) return; idealKey=key;
+  let b;
+  if(idealMode==='laps') b=searchLine(s=>s.T);            // shortest time per lap
+  else { const f=steadyLap(vtop,searchLine(s=>s.T/s.L+1e-6*s.L)); const target=f.T/f.L*1.005;
+         b=searchLine(s=>s.L+1e5*Math.max(0,s.T/s.L-target)); } // highest average speed, shortest such line
+  ideal=steadyLap(vtop,b); ideal.b=b;
+  const mph=ideal.L/ideal.T/1.4667, mile=MILE*ideal.T/ideal.L;
+  $('idealMsg').textContent = idealMode==='laps'
+    ? `Most-laps line: ${ideal.L.toFixed(0)} ft per lap, ${ideal.T.toFixed(1)} s per lap, about ${(300/ideal.T).toFixed(1)} laps in 5 minutes once she's rolling.`
+    : `Fastest-mile line: ${ideal.L.toFixed(0)} ft per lap, average ${mph.toFixed(1)} mph, ${(MILE/ideal.L).toFixed(1)} laps to a mile, about ${fmt(mile)} once she's rolling.`;
+}
 let vtop=13*1.4667, steady, run, T=0, speed=4, playing=!matchMedia('(prefers-reduced-motion: reduce)').matches, last=null, drag=-1;
 const fmt=t=>{const m=Math.floor(t/60), s=t-m*60; return `${m}:${s.toFixed(1).padStart(4,'0')}`;};
 function updateSteady(){
@@ -366,6 +381,9 @@ $('play').onclick=()=>{ if(T>=run.time) T=0; playing=!playing; $('play').textCon
 $('restart').onclick=()=>{ T=0; playing=true; $('play').textContent='Pause'; };
 document.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{ speed=+b.dataset.sp; document.querySelectorAll('[data-sp]').forEach(x=>x.setAttribute('aria-pressed',x===b)); });
 $('reset').onclick=()=>{ base=DEFAULT.slice(); rerun(false); playing=true; $('play').textContent='Pause'; };
+function setIdeal(m){ idealMode=m; $('iLaps').setAttribute('aria-pressed',m==='laps'); $('iMile').setAttribute('aria-pressed',m==='mile'); computeIdeal(); }
+$('iLaps').onclick=()=>setIdeal('laps'); $('iMile').onclick=()=>setIdeal('mile');
+$('useIdeal').onclick=()=>{ base=ideal.b.slice(); rerun(false); playing=true; $('play').textContent='Pause'; };
 $('match').onclick=()=>{ const n=+$('laps5').value; if(!(n>0)) return; const r=matchPace(n); vtop=r.vtop; $('mph').value=(vtop/1.4667).toFixed(1);
   $('paceMsg').textContent = r.ok ? `${n} laps in 5 minutes on this line works out to about ${(vtop/1.4667).toFixed(1)} mph top speed on the straights.` : `${n} laps in 5 minutes is faster than this line allows. Try moving her line closer to the inside, then Match again.`;
   rerun(false); playing=true; $('play').textContent='Pause'; };
