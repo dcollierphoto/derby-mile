@@ -1,11 +1,14 @@
 # Derby Mile
 
-A regulation WFTDA roller derby track drawn to scale, the diamond skating line, and an animated mile with lap-by-lap timing.
+A regulation WFTDA roller derby track drawn to scale, with a skater you can tune.
 
 Live page: https://dcollierphoto.github.io/derby-mile/
 
-- Inside line: 148.5 ft per lap, about 35.5 laps to a mile
-- Diamond line at speed: about 164–171 ft per lap, about 31–32 laps to a mile
-- Outside line: 236.5 ft per lap, about 22.3 laps to a mile
+- Drag the dots on the track to change her line
+- Enter how many laps she skates in 5 minutes and press Match to set her speed
+- Set a goal by distance (miles) or by time (minutes)
+- Find fastest line searches for the quickest line at her speed
 
-Track dimensions come from the WFTDA track layout guide. The skating speeds and lines are a physics simulation, not measured data.
+Reference laps per mile: inside line 35.5, center of the track 27.4, outside line 22.3.
+
+Track dimensions come from the WFTDA track layout guide. Speeds and lines are a physics model, not measured data.
