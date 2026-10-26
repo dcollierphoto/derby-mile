@@ -62,6 +62,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-of
 .note{font-size:15px;color:var(--muted)}
 a{color:var(--tape);font-weight:600}
 @media (max-width:560px){ .board{grid-template-columns:1fr} }
+.duelrow{grid-template-columns:minmax(0,1.6fr) repeat(2,minmax(0,1fr))}
+.prow b.lead{color:var(--c)}
+.prow b.lead::after{content:' ◀';font-size:.7em}
+.pick{list-style:none;padding:0;margin:0;display:grid;gap:10px;font-size:18px}
+.pick li{border-left:4px solid var(--pink);padding-left:12px}
+.pick li:last-child{border-color:var(--violet)}
 .paths{display:grid;gap:0;border-top:1px solid var(--rule)}
 .prow{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(0,1fr));gap:10px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--rule)}
 .prow.hd{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
@@ -129,6 +135,20 @@ select{font:600 20px var(--body);padding:6px 8px;border:2px solid var(--rule);bo
       </div>
       <p class="note" id="aHow">How it works: 5 minutes is 300 seconds, so divide 300 by the laps.</p>
     </div>
+  </section>
+
+  <section>
+    <h2>Laps or a real mile?</h2>
+    <p>Counting laps and measuring distance are two different races. Here's Diamond against the Mile Line for the same 60 seconds. Watch both columns.</p>
+    <div class="rink">
+      <canvas id="cv2" width="900" height="620" aria-label="Diamond and Mile Line skating for 60 seconds"></canvas>
+      <div class="paths" id="duel"></div>
+      <div class="row"><button id="again2" type="button">Skate again</button><p class="banner" id="banner2" aria-live="polite"></p></div>
+    </div>
+    <ul class="pick">
+      <li><b>Coach counting laps?</b> Skate the Diamond. Shorter laps, so you get more of them.</li>
+      <li><b>Measuring a real mile?</b> Skate the Mile Line: about 12 feet off the inside on the straightaways and 6 feet off in the turns, so you never have to slow down. <span id="mileFacts"></span></li>
+    </ul>
   </section>
 
   <p class="note">Want all the math? <a href="lab.html">Open the full simulator</a> to drag the line, set a pace, and see every lap. Track size comes from the official <a href="https://static.wftda.com/resources/wftda-regulation-track-layout-guide.pdf">WFTDA layout guide</a>; the race is a physics model.</p>
@@ -236,13 +256,14 @@ const LINES = {
   pink:   [5.6,2.2,2,2.1, 5.6,2.2,2,2.1],       // fastest line for laps, never closer than 2 ft
   orange: Array(8).fill(11)
 };
-const sk = Object.fromEntries(KEYS.map(k=>{
-  const s=steadyLap(VT,LINES[k]), n=s.X.length, {v}=speeds(s.X,s.Y,()=>VT,true,false);
+function skater(line){
+  const s=steadyLap(VT,line), n=s.X.length, {v}=speeds(s.X,s.Y,()=>VT,true,false);
   const off=Math.round(START/STEP), X=new Float64Array(n), Y=new Float64Array(n), V=new Float64Array(n);
   for(let i=0;i<n;i++){ const j=(i+off)%n; X[i]=s.X[j]; Y[i]=s.Y[j]; V[i]=v[j]; }
   const tt=new Float64Array(n+1); for(let i=0;i<n;i++){ const j=(i+1)%n; tt[i+1]=tt[i]+Math.hypot(X[j]-X[i],Y[j]-Y[i])/((V[i]+V[j])/2); }
-  return [k,{X,Y,tt,T:tt[n],L:s.L,n,MPH:Array.from(V,v=>v/1.4667)}];
-}));
+  return {X,Y,tt,T:tt[n],L:s.L,n,MPH:Array.from(V,v=>v/1.4667)};
+}
+const sk = Object.fromEntries(KEYS.map(k=>[k,skater(LINES[k])]));
 const goalT = s => s.T*RACE, finish = Math.max(...KEYS.map(k=>goalT(sk[k])));
 function where(s,t){ const lap=Math.floor(t/s.T), r=t-lap*s.T; let lo=0,hi=s.n; while(hi-lo>1){ const m=(lo+hi)>>1; if(s.tt[m]<=r) lo=m; else hi=m; }
   const f=(r-s.tt[lo])/((s.tt[lo+1]-s.tt[lo])||1), j=(lo+1)%s.n; return {x:s.X[lo]+(s.X[j]-s.X[lo])*f, y:s.Y[lo]+(s.Y[j]-s.Y[lo])*f, laps:t/s.T, mph:s.MPH[lo]+(s.MPH[j]-s.MPH[lo])*f, frac:(lo+f)/s.n}; }
@@ -302,6 +323,49 @@ function frame(ts){
 $('again').onclick=()=>{ t=0; done=false; $('banner').textContent=''; KEYS.forEach(k=>$('c_'+k).classList.remove('win')); };
 if(matchMedia('(prefers-reduced-motion: reduce)').matches) t=finish;
 requestAnimationFrame(frame);
+
+
+// ---- laps or a real mile: Diamond vs Mile Line for 60 seconds ----
+const MILE_LINE=[11.8,7,6,7.5, 11.8,7,6,7.5];
+const duelSk={pink:sk.pink, violet:skater(MILE_LINE)};
+const DNAME={pink:'Diamond',violet:'Mile Line'}, DUR=60;
+const cv2=$('cv2'), c2=cv2.getContext('2d');
+function track2(){
+  c2.clearRect(0,0,cv2.width,cv2.height); c2.beginPath();
+  for(let d=0; d<=INL; d+=1){ const [x,y,nx,ny,W]=inside(d); const p=P(x+nx*W,y+ny*W); d?c2.lineTo(...p):c2.moveTo(...p); } c2.closePath();
+  for(let d=0; d<=INL; d+=1){ const [x,y]=inside(d); const p=P(x,y); d?c2.lineTo(...p):c2.moveTo(...p); } c2.closePath();
+  c2.fillStyle=css('--floor'); c2.fill('evenodd'); c2.lineWidth=3; c2.strokeStyle=css('--tape'); c2.stroke();
+  const [x,y,nx,ny,W]=inside(START); c2.beginPath(); c2.moveTo(...P(x,y)); c2.lineTo(...P(x+nx*W,y+ny*W)); c2.lineWidth=4; c2.strokeStyle=css('--ink'); c2.stroke();
+  const [lx,ly]=P(x+nx*(W+1.8),y); c2.fillStyle=css('--muted'); c2.font='700 15px Barlow, sans-serif'; c2.textAlign='center'; c2.fillText('START / FINISH',lx,ly-2);
+  c2.font='600 15px Barlow, sans-serif'; c2.fillText('skaters go counterclockwise', OX, OY+6);
+}
+function star2(x,y,r,c){ c2.beginPath(); for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5, rr=i%2?r*.45:r; c2.lineTo(x+rr*Math.cos(a), y+rr*Math.sin(a));} c2.closePath(); c2.fillStyle=c; c2.fill(); c2.lineWidth=2; c2.strokeStyle=css('--panel'); c2.stroke(); }
+
+function duelRows(tt){
+  const r={}; for(const k in duelSk){ const s=duelSk[k], w=where(s,tt); r[k]={w, laps:tt/s.T, feet:tt/s.T*s.L}; } return r; }
+function duelTable(r){
+  const lapLead = r.pink.laps>=r.violet.laps?'pink':'violet', ftLead = r.pink.feet>=r.violet.feet?'pink':'violet';
+  $('duel').innerHTML = `<div class="prow hd duelrow"><span>Path</span><span>Laps</span><span>Feet</span></div>` +
+    ['pink','violet'].map(k=>`<div class="prow duelrow" style="--c:var(--${k})"><span class="nm">${DNAME[k]}<small>${k==='pink'?'best line for laps':'best line for a measured mile'}</small></span><b class="${lapLead===k?'lead':''}">${r[k].laps.toFixed(1)}</b><b class="${ftLead===k?'lead':''}">${Math.round(r[k].feet).toLocaleString()}</b></div>`).join('');
+}
+let t2=0, last2=null, done2=false;
+function frame2(ts){
+  if(last2!==null && !done2) t2=Math.min(DUR, t2+(ts-last2)/1000*2); last2=ts;
+  track2();
+  for(const k of ['violet','pink']){ const s=duelSk[k]; c2.beginPath(); for(let i=0;i<s.n;i++){ const p=P(s.X[i],s.Y[i]); i?c2.lineTo(...p):c2.moveTo(...p); } c2.closePath();
+    c2.globalAlpha=.6; c2.lineWidth=3; c2.strokeStyle=css('--'+k); c2.stroke(); c2.globalAlpha=1; }
+  const r=duelRows(t2);
+  for(const k of ['violet','pink']){ const [px,py]=P(r[k].w.x,r[k].w.y); star2(px,py,13,css('--'+k)); }
+  duelTable(r);
+  c2.font='700 22px "JetBrains Mono", monospace'; c2.fillStyle=css('--ink'); c2.textAlign='center'; c2.fillText(t2>=DUR?'1:00 of 1:00':`0:${String(Math.floor(t2)).padStart(2,'0')} of 1:00`, OX, OY-24);
+  if(t2>=DUR){ done2=true; $('banner2').textContent=`After 60 seconds, Diamond has more laps, but the Mile Line went ${Math.round(r.violet.feet-r.pink.feet)} feet farther.`; }
+  requestAnimationFrame(frame2);
+}
+$('again2').onclick=()=>{ t2=0; done2=false; $('banner2').textContent=''; };
+if(matchMedia('(prefers-reduced-motion: reduce)').matches) t2=DUR;
+requestAnimationFrame(frame2);
+{ const dMile=MILE/sk.pink.L*sk.pink.T, mMile=MILE/duelSk.violet.L*duelSk.violet.T;
+  $('mileFacts').textContent = `About ${(MILE/duelSk.violet.L).toFixed(0)} laps, and about ${Math.round(dMile-mMile)} seconds faster than skating the mile on Diamond (${mmss(mMile)} vs ${mmss(dMile)} at her pace).`; }
 
 // ---- how many laps ----
 const DESC={blue:'hugs 2 ft off the inside',pink:'best line for laps',orange:'stays out wide'};
