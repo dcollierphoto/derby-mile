@@ -292,8 +292,8 @@ function frame(ts){
   track(); paths();
   const now={};
   for(const k of ['orange','violet','blue','pink']){ const s=sk[k], g=goalT(s), tt=Math.min(t,g), w=where(s,tt); now[k]=w;
-    const [px,py]=P(w.x,w.y); star(px,py,13,css('--'+k)); if(tt<g-1e-6) tag(px,py,w.mph.toFixed(1)+' mph',css('--'+k));
-    $('l_'+k).textContent = tt>=g-1e-6 ? `Done in ${g.toFixed(1)} s` : `${w.laps.toFixed(1)} laps · ${w.mph.toFixed(1)} mph`; }
+    const [px,py]=P(w.x,w.y); star(px,py,13,css('--'+k));
+    $('l_'+k).textContent = tt>=g-1e-6 ? `Done in ${g.toFixed(1)} s` : `${w.laps.toFixed(1)} laps`; }
   graph(now);
   const win=order[0];
   if(t>=goalT(sk[win])){ $('c_'+win).classList.add('win');
