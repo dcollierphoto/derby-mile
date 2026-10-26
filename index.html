@@ -11,17 +11,17 @@
 /* Layout: one column lesson. Race on the track first, then three steps, then "your time" calculator */
 :root{
   --floor:#eef0ec; --panel:#f8f9f6; --ink:#1d2421; --muted:#5f6a65; --rule:#cfd5d0;
-  --tape:#1f8a83; --pink:#d1366e; --blue:#2a7fb8; --orange:#e08a1e;
+  --tape:#1f8a83; --pink:#d1366e; --blue:#2a7fb8; --orange:#e08a1e; --violet:#6a4cc0;
   --display:"Big Shoulders Display", Impact, "Arial Narrow", sans-serif;
   --body:"Barlow", "Helvetica Neue", Arial, sans-serif;
   --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --floor:#151a18; --panel:#1c2220; --ink:#e7ece9; --muted:#9aa6a0; --rule:#323b37;
-  --tape:#3fc2b8; --pink:#ff5c97; --blue:#5aaee6; --orange:#f2a640; color-scheme:dark}}
+  --tape:#3fc2b8; --pink:#ff5c97; --blue:#5aaee6; --orange:#f2a640; --violet:#a98ff2; color-scheme:dark}}
 :root[data-theme="dark"]{
   --floor:#151a18; --panel:#1c2220; --ink:#e7ece9; --muted:#9aa6a0; --rule:#323b37;
-  --tape:#3fc2b8; --pink:#ff5c97; --blue:#5aaee6; --orange:#f2a640; color-scheme:dark}
+  --tape:#3fc2b8; --pink:#ff5c97; --blue:#5aaee6; --orange:#f2a640; --violet:#a98ff2; color-scheme:dark}
 body{background:var(--floor);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.5}
 .wrap{max-width:920px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:40px}
 h1{font-family:var(--display);font-weight:900;font-size:clamp(48px,9vw,84px);line-height:.9;margin:0;text-transform:uppercase}
@@ -32,7 +32,7 @@ p{margin:0;max-width:62ch}
 section{display:grid;gap:16px}
 .rink{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:10px;display:grid;gap:10px}
 canvas{display:block;width:100%;height:auto}
-.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .chip{border-radius:6px;padding:8px 10px;border:2px solid var(--c);display:grid;gap:2px;min-width:0}
 .chip b{font-family:var(--display);font-size:22px;text-transform:uppercase;color:var(--c);line-height:1}
 .chip span{font-size:14px;color:var(--muted)}
@@ -59,7 +59,16 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-of
 .ans span{font-size:16px;color:var(--muted)}
 .note{font-size:15px;color:var(--muted)}
 a{color:var(--tape);font-weight:600}
-@media (max-width:520px){ .board{grid-template-columns:1fr} }
+@media (max-width:640px){ .board{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.paths{display:grid;gap:0;border-top:1px solid var(--rule)}
+.prow{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(0,1fr));gap:10px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--rule)}
+.prow.hd{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.prow .nm{font-weight:700;color:var(--c)}
+.prow .nm small{display:block;font-weight:500;color:var(--muted);font-size:14px}
+.prow b{font-family:var(--mono);font-size:22px;font-variant-numeric:tabular-nums;font-weight:600}
+.prow.best b{color:var(--c)}
+select{font:600 20px var(--body);padding:6px 8px;border:2px solid var(--rule);border-radius:6px;background:var(--floor);color:var(--ink)}
+@media (max-width:560px){ .prow{grid-template-columns:minmax(0,1fr) repeat(3,auto)} .prow b{font-size:18px} }
 </style>
 </head>
 <body>
@@ -72,17 +81,26 @@ a{color:var(--tape);font-weight:600}
 
   <section>
     <h2>The race</h2>
-    <div class="row"><span class="seg" role="group" aria-label="Race type"><button type="button" id="mLaps" aria-pressed="true">5-lap race</button><button type="button" id="mMile" aria-pressed="false">1-mile race</button></span></div>
-    <p id="intro">Three skaters with the exact same legs race 5 laps. The only difference is the path they take.</p>
+    <p>Four skaters with the exact same legs race 5 laps. The only difference is the path they take. Watch how much longer the outside paths are.</p>
     <div class="rink">
-      <canvas id="cv" width="900" height="620" aria-label="Three skaters racing on a roller derby track"></canvas>
+      <canvas id="cv" width="900" height="620" aria-label="Four skaters racing 5 laps on a roller derby track"></canvas>
       <div class="board">
-        <div class="chip" id="cBlue" style="--c:var(--blue)"><b>Hugger</b><span>Hugs the inside line</span><i id="lBlue">0.0 laps</i></div>
-        <div class="chip" id="cPink" style="--c:var(--pink)"><b>Diamond</b><span id="pinkCap">Skates the diamond</span><i id="lPink">0.0 laps</i></div>
-        <div class="chip" id="cOrange" style="--c:var(--orange)"><b>Wide</b><span>Stays out wide</span><i id="lOrange">0.0 laps</i></div>
+        <div class="chip" id="c_blue" style="--c:var(--blue)"><b>Hugger</b><span>Hugs the inside line</span><i id="l_blue">0.0 laps</i></div>
+        <div class="chip" id="c_pink" style="--c:var(--pink)"><b>Diamond</b><span>Best line for laps</span><i id="l_pink">0.0 laps</i></div>
+        <div class="chip" id="c_violet" style="--c:var(--violet)"><b>Mile Diamond</b><span>Best line for a mile</span><i id="l_violet">0.0 laps</i></div>
+        <div class="chip" id="c_orange" style="--c:var(--orange)"><b>Wide</b><span>Stays out wide</span><i id="l_orange">0.0 laps</i></div>
       </div>
       <div class="row"><button id="again" type="button">Race again</button><p class="banner" id="banner" aria-live="polite"></p></div>
-      <p class="why" id="mileTip" hidden><b>The mile diamond:</b> For a mile measured by distance, Diamond swings her diamond wider: about 12 ft out on the straightaways and about 6 ft off the inside in the middle of each turn. That's just wide enough that she never has to slow down. She and Wide finish almost together, because going any wider than that doesn't make you faster. Her laps are about 194 ft, so a mile is about 27 laps. If your coach counts laps instead, use the regular diamond.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>How many laps?</h2>
+    <p>Type a distance to see how many laps each path takes, and how long it would take at her pace (31 laps in 5 minutes).</p>
+    <div class="calc">
+      <div class="row"><label for="dist">Distance</label><input id="dist" type="number" min="0.1" step="0.1" value="1"><select id="unit" aria-label="Distance unit"><option value="mi">miles</option><option value="ft">feet</option><option value="km">kilometers</option></select></div>
+      <div class="paths" id="paths"></div>
+      <p class="note">Counting laps? Diamond gets you the most laps. Measuring real distance? Mile Diamond is as fast as it gets, because she never has to slow down in the turns. Wide ties her on time, but going wider than Mile Diamond doesn't make you any faster.</p>
     </div>
   </section>
 
@@ -94,7 +112,7 @@ a{color:var(--tape);font-weight:600}
       <li><div><b>In the middle of the turn, get close to the inside line.</b>That spot is called the apex. Touching close here keeps your lap short.</div></li>
       <li><div><b>Coming out, drift out a little and push.</b>Let the turn open up and use your strides to power down the straightaway.</div></li>
     </ol>
-    <p class="why"><b>Why it works:</b> Hugger takes the shortest path, but the turns are so tight she has to slow down. Wide never slows down, but her laps are way longer. Diamond keeps her laps short <em>and</em> her speed up.</p>
+    <p class="why"><b>Why it works:</b> Hugger takes the shortest path, but the turns are so tight she has to slow down. Wide never slows down, but her laps are way longer. Diamond keeps her laps short <em>and</em> her speed up. Mile Diamond is the same idea swung a little wider, about 6 feet off the inside at the apex, so she keeps full speed the whole way.</p>
   </section>
 
   <section>
@@ -108,16 +126,6 @@ a{color:var(--tape);font-weight:600}
         <div class="ans"><b id="aMore">0.3 s</b><span>faster per lap gets you one more lap</span></div>
       </div>
       <p class="note">How it works: 5 minutes is 300 seconds. Divide 300 by your laps to get your time per lap. A good derby lap is about 155 to 170 feet long, so a mile (5,280 feet) is about 31 to 34 laps.</p>
-    </div>
-  </section>
-
-  <section>
-    <h2>Laps in a mile</h2>
-    <p>The track is always the same size, so the path you take decides how long a lap is.</p>
-    <div class="answers">
-      <div class="ans" style="border-color:var(--blue)"><b>35½</b><span>laps hugging the inside</span></div>
-      <div class="ans"><b>31 – 34</b><span>laps on the diamond</span></div>
-      <div class="ans" style="border-color:var(--orange)"><b>22</b><span>laps on the very outside</span></div>
     </div>
   </section>
 
@@ -217,28 +225,24 @@ function matchPace(target){
 
 
 const mmss=s=>{ const m=Math.floor(s/60), r=Math.round(s-m*60); return r===60?`${m+1}:00`:`${m}:${String(r).padStart(2,'0')}`; };
-// ---- race setup: her pace (31 laps in 5 min) ----
-const VT = 13.8*1.4667;
+// ---- skaters: her pace (31 laps in 5 min) ----
+const VT = 13.8*1.4667, RACE=5;
+const KEYS=['blue','pink','violet','orange'];
+const NAME={blue:'Hugger',pink:'Diamond',violet:'Mile Diamond',orange:'Wide'};
 const LINES = {
   blue:   Array(8).fill(0.3),
   pink:   [5,0.7,0.3,0.8, 5,0.7,0.3,0.8],
+  violet: [11.8,7,6,7.5, 11.8,7,6,7.5],
   orange: Array(8).fill(11)
 };
-const RACE=5;
-const MILE_PINK=[11.8,7,6,7.5, 11.8,7,6,7.5];  // ideal diamond for a measured mile at her pace
-const build = lines => Object.fromEntries(Object.entries(lines).map(([k,b])=>{
-  const s=steadyLap(VT,b), n=s.X.length, {v,ds}=speeds(s.X,s.Y,()=>VT,true,false);
-  // shift so each lap starts at the jammer line
+const sk = Object.fromEntries(KEYS.map(k=>{
+  const s=steadyLap(VT,LINES[k]), n=s.X.length, {v}=speeds(s.X,s.Y,()=>VT,true,false);
   const off=Math.round(START/STEP), X=new Float64Array(n), Y=new Float64Array(n), V=new Float64Array(n);
   for(let i=0;i<n;i++){ const j=(i+off)%n; X[i]=s.X[j]; Y[i]=s.Y[j]; V[i]=v[j]; }
   const tt=new Float64Array(n+1); for(let i=0;i<n;i++){ const j=(i+1)%n; tt[i+1]=tt[i]+Math.hypot(X[j]-X[i],Y[j]-Y[i])/((V[i]+V[j])/2); }
   return [k,{X,Y,tt,T:tt[n],L:s.L,n}];
 }));
-const SK_LAPS=build(LINES), SK_MILE=build({...LINES, pink:MILE_PINK});
-let sk=SK_LAPS;
-let mode='laps';
-const goalT = s => mode==='laps' ? s.T*RACE : MILE*s.T/s.L;
-let finish = Math.max(...Object.values(sk).map(goalT));
+const goalT = s => s.T*RACE, finish = Math.max(...KEYS.map(k=>goalT(sk[k])));
 function where(s,t){ const lap=Math.floor(t/s.T), r=t-lap*s.T; let lo=0,hi=s.n; while(hi-lo>1){ const m=(lo+hi)>>1; if(s.tt[m]<=r) lo=m; else hi=m; }
   const f=(r-s.tt[lo])/((s.tt[lo+1]-s.tt[lo])||1), j=(lo+1)%s.n; return {x:s.X[lo]+(s.X[j]-s.X[lo])*f, y:s.Y[lo]+(s.Y[j]-s.Y[lo])*f, laps:t/s.T}; }
 
@@ -253,38 +257,40 @@ function track(){
   const [lx,ly]=P(x+nx*(W+1.8),y); ctx.fillStyle=css('--muted'); ctx.font='700 15px Barlow, sans-serif'; ctx.textAlign='center'; ctx.fillText('START / FINISH',lx,ly-2);
   ctx.font='600 15px Barlow, sans-serif'; ctx.fillText('skaters go counterclockwise', OX, OY+6);
 }
-const COL={blue:'--blue',pink:'--pink',orange:'--orange'};
-function paths(){ for(const k in sk){ const s=sk[k]; ctx.beginPath(); for(let i=0;i<s.n;i++){ const p=P(s.X[i],s.Y[i]); i?ctx.lineTo(...p):ctx.moveTo(...p); } ctx.closePath();
-  ctx.globalAlpha=.55; ctx.lineWidth=k==='pink'?4:2.5; ctx.setLineDash(k==='pink'?[]:[2,7]); ctx.lineCap='round'; ctx.strokeStyle=css(COL[k]); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; } }
+function paths(){ for(const k of KEYS){ const s=sk[k]; ctx.beginPath(); for(let i=0;i<s.n;i++){ const p=P(s.X[i],s.Y[i]); i?ctx.lineTo(...p):ctx.moveTo(...p); } ctx.closePath();
+  ctx.globalAlpha=.6; ctx.lineWidth=3; ctx.lineCap='round'; ctx.setLineDash(k==='pink'||k==='violet'?[]:[2,7]); ctx.strokeStyle=css('--'+k); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; } }
 function star(x,y,r,c){ ctx.beginPath(); for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5, rr=i%2?r*.45:r; ctx.lineTo(x+rr*Math.cos(a), y+rr*Math.sin(a));} ctx.closePath(); ctx.fillStyle=c; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle=css('--panel'); ctx.stroke(); }
 
-let t=0, last=null, done=false; const speedup=()=> mode==='laps'?3:14;
-const NAME={blue:'Hugger',pink:'Diamond',orange:'Wide'}, CHIP={blue:'cBlue',pink:'cPink',orange:'cOrange'}, LAB={blue:'lBlue',pink:'lPink',orange:'lOrange'};
+let t=0, last=null, done=false; const SPEEDUP=3;
+const order=KEYS.slice().sort((a,b)=>goalT(sk[a])-goalT(sk[b]));
 function frame(ts){
-  if(last!==null && !done) t+=(ts-last)/1000*speedup(); last=ts;
+  if(last!==null && !done) t+=(ts-last)/1000*SPEEDUP; last=ts;
   track(); paths();
-  for(const k of ['orange','blue','pink']){ const s=sk[k], g=goalT(s), tt=Math.min(t, g), w=where(s, tt);
-    const [px,py]=P(w.x,w.y); star(px,py,k==='pink'?15:12,css(COL[k]));
-    const doneTxt = mode==='laps' ? `Done in ${g.toFixed(1)} s` : `Done in ${mmss(g)} (${(MILE/s.L).toFixed(1)} laps)`;
-    $(LAB[k]).textContent = tt>=g-1e-6 ? doneTxt : (mode==='laps' ? `${w.laps.toFixed(1)} laps` : `${Math.round(w.laps*s.L).toLocaleString()} ft`); }
-  const order = Object.keys(sk).sort((a,b)=>goalT(sk[a])-goalT(sk[b])), winner=order[0];
-  if(t>=goalT(sk[winner])){ $(CHIP[winner]).classList.add('win');
-    const gap=k=>{ const d=goalT(sk[k])-goalT(sk[winner]); return d.toFixed(1)+' seconds'; };
-    $('banner').textContent = `${NAME[winner]} wins! ${NAME[order[1]]} finishes ${gap(order[1])} later, ${NAME[order[2]]} ${gap(order[2])} later.`; }
+  for(const k of ['orange','violet','blue','pink']){ const s=sk[k], g=goalT(s), tt=Math.min(t,g), w=where(s,tt);
+    const [px,py]=P(w.x,w.y); star(px,py,13,css('--'+k));
+    $('l_'+k).textContent = tt>=g-1e-6 ? `Done in ${g.toFixed(1)} s` : `${w.laps.toFixed(1)} laps`; }
+  const win=order[0];
+  if(t>=goalT(sk[win])){ $('c_'+win).classList.add('win');
+    $('banner').textContent = `${NAME[win]} wins! ` + order.slice(1).map(k=>`${NAME[k]} +${(goalT(sk[k])-goalT(sk[win])).toFixed(1)} s`).join(', ') + '.'; }
   if(t>=finish) done=true;
   requestAnimationFrame(frame);
 }
-const restart=()=>{ t=0; done=false; $('banner').textContent=''; Object.values(CHIP).forEach(id=>$(id).classList.remove('win')); };
-$('again').onclick=restart;
-function setMode(m){ mode=m; sk = m==='laps'?SK_LAPS:SK_MILE; $('pinkCap').textContent = m==='laps'?'Skates the diamond':'Skates the mile diamond'; finish=Math.max(...Object.values(sk).map(goalT));
-  $('mLaps').setAttribute('aria-pressed',m==='laps'); $('mMile').setAttribute('aria-pressed',m==='mile');
-  $('intro').textContent = m==='laps'
-    ? 'Three skaters with the exact same legs race 5 laps. The only difference is the path they take.'
-    : 'Now they race one real mile (5,280 feet), measured by distance instead of laps. Wide has fewer laps to skate, but each one is longer.';
-  $('mileTip').hidden = m!=='mile'; restart(); }
-$('mLaps').onclick=()=>setMode('laps'); $('mMile').onclick=()=>setMode('mile');
-if(matchMedia('(prefers-reduced-motion: reduce)').matches){ t=finish; }
+$('again').onclick=()=>{ t=0; done=false; $('banner').textContent=''; KEYS.forEach(k=>$('c_'+k).classList.remove('win')); };
+if(matchMedia('(prefers-reduced-motion: reduce)').matches) t=finish;
 requestAnimationFrame(frame);
+
+// ---- how many laps ----
+const DESC={blue:'hugs the inside line',pink:'best line for laps',violet:'best line for a mile',orange:'stays out wide'};
+function lapsCalc(){
+  const v=+$('dist').value, u=$('unit').value; if(!(v>0)) return;
+  const ft = u==='mi'? v*MILE : u==='km'? v*3280.84 : v;
+  const rows=KEYS.map(k=>({k, laps:ft/sk[k].L, time:ft/sk[k].L*sk[k].T}));
+  const tmin=Math.min(...rows.map(r=>r.time)); // ties within 1.5 s go to the shorter path
+  const fastest=rows.filter(r=>r.time<=tmin+1.5).reduce((a,b)=>sk[a.k].L<sk[b.k].L?a:b).k;
+  $('paths').innerHTML = `<div class="prow hd"><span>Path</span><span>One lap</span><span>Laps</span><span>Time</span></div>` +
+    rows.map(r=>`<div class="prow${r.k===fastest?' best':''}" style="--c:var(--${r.k})"><span class="nm">${NAME[r.k]}<small>${DESC[r.k]}</small></span><b>${Math.round(sk[r.k].L)} ft</b><b>${r.laps.toFixed(1)}</b><b>${mmss(r.time)}</b></div>`).join('');
+}
+$('dist').addEventListener('input',lapsCalc); $('unit').addEventListener('change',lapsCalc); lapsCalc();
 
 // ---- your time ----
 function calc(){ const n=+$('laps').value; if(!(n>0)) return; const lap=300/n;
