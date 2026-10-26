@@ -32,7 +32,7 @@ p{margin:0;max-width:62ch}
 section{display:grid;gap:16px}
 .rink{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:10px;display:grid;gap:10px}
 canvas{display:block;width:100%;height:auto}
-.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .chip{border-radius:6px;padding:8px 10px;border:2px solid var(--c);display:grid;gap:2px;min-width:0}
 .chip b{font-family:var(--display);font-size:22px;text-transform:uppercase;color:var(--c);line-height:1}
 .chip span{font-size:14px;color:var(--muted)}
@@ -61,7 +61,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-of
 .ans span{font-size:16px;color:var(--muted)}
 .note{font-size:15px;color:var(--muted)}
 a{color:var(--tape);font-weight:600}
-@media (max-width:640px){ .board{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:560px){ .board{grid-template-columns:1fr} }
 .paths{display:grid;gap:0;border-top:1px solid var(--rule)}
 .prow{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(0,1fr));gap:10px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--rule)}
 .prow.hd{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
@@ -83,14 +83,13 @@ select{font:600 20px var(--body);padding:6px 8px;border:2px solid var(--rule);bo
 
   <section>
     <h2>The race</h2>
-    <p>Four skaters with the exact same legs race 5 laps. The only difference is the path they take. Hugger and Wide are baselines: nobody really skates like that, but they show the two extremes. Watch the speeds in the turns.</p>
+    <p>Three skaters with the exact same legs race 5 laps. The only difference is the path they take. Hugger and Wide are baselines that show the two extremes. Watch the speeds in the turns.</p>
     <div class="rink">
-      <canvas id="cv" width="900" height="620" aria-label="Four skaters racing 5 laps on a roller derby track"></canvas>
+      <canvas id="cv" width="900" height="620" aria-label="Three skaters racing 5 laps on a roller derby track"></canvas>
       <div class="spd"><p class="spdh">Speed around one lap <span class="note">Watch the dips in the turns</span></p><canvas id="sp" width="900" height="250" aria-label="Each skater's speed around one lap, with the turns shaded"></canvas></div>
       <div class="board">
-        <div class="chip" id="c_blue" style="--c:var(--blue)"><b>Hugger</b><span>Baseline: hugs the inside</span><i id="l_blue">0.0 laps</i></div>
+        <div class="chip" id="c_blue" style="--c:var(--blue)"><b>Hugger</b><span>Baseline: hugs 2 ft off the inside</span><i id="l_blue">0.0 laps</i></div>
         <div class="chip" id="c_pink" style="--c:var(--pink)"><b>Diamond</b><span>Best line for laps</span><i id="l_pink">0.0 laps</i></div>
-        <div class="chip" id="c_violet" style="--c:var(--violet)"><b>Mile Diamond</b><span>Best line for a mile</span><i id="l_violet">0.0 laps</i></div>
         <div class="chip" id="c_orange" style="--c:var(--orange)"><b>Wide</b><span>Baseline: stays out wide</span><i id="l_orange">0.0 laps</i></div>
       </div>
       <div class="row"><button id="again" type="button">Race again</button><p class="banner" id="banner" aria-live="polite"></p></div>
@@ -103,7 +102,7 @@ select{font:600 20px var(--body);padding:6px 8px;border:2px solid var(--rule);bo
     <div class="calc">
       <div class="row"><label for="dist">Distance</label><input id="dist" type="number" min="0.1" step="0.1" value="1"><select id="unit" aria-label="Distance unit"><option value="mi">miles</option><option value="ft">feet</option><option value="km">kilometers</option></select></div>
       <div class="paths" id="paths"></div>
-      <p class="note">Counting laps? Diamond gets you the most laps. Measuring real distance? Mile Diamond is as fast as it gets, because she never has to slow down in the turns. Wide ties her on time, but going wider than Mile Diamond doesn't make you any faster.</p>
+      <p class="note">Wide racks up fewer laps for the same distance, but each lap is much longer. When laps are what count, Diamond gets the most of them.</p>
     </div>
   </section>
 
@@ -111,18 +110,18 @@ select{font:600 20px var(--body);padding:6px 8px;border:2px solid var(--rule);bo
     <h2>Skate the diamond</h2>
     <p>Here's what Diamond does, going into each turn:</p>
     <ol class="steps">
-      <li><div><b>Before the turn, stay a few feet off the inside line.</b>That gives you room to make your turn round instead of sharp.</div></li>
-      <li><div><b>In the middle of the turn, get close to the inside line.</b>That spot is called the apex. Touching close here keeps your lap short.</div></li>
+      <li><div><b>On the straightaway, stay about 5 or 6 feet off the inside line.</b>That gives you room to make your turn round instead of sharp.</div></li>
+      <li><div><b>In the middle of the turn, get close to the inside line, about 2 feet off.</b>That spot is called the apex. Getting close here keeps your lap short.</div></li>
       <li><div><b>Coming out, drift out a little and push.</b>Let the turn open up and use your strides to power down the straightaway.</div></li>
     </ol>
-    <p class="why"><b>Why it works:</b> Hugger takes the shortest path, but the turns are so tight she has to slow down. Wide never slows down, but her laps are way longer. Diamond keeps her laps short <em>and</em> her speed up. Mile Diamond is the same idea swung a little wider, about 6 feet off the inside at the apex, so she keeps full speed the whole way.</p>
+    <p class="why"><b>Why it works:</b> Hugger takes a short path, but her turns are so tight she has to slow down and never gets back to full speed. Wide never slows down, but her laps are way longer. Diamond keeps her laps short <em>and</em> her speed up.</p>
   </section>
 
   <section>
     <h2>Your time</h2>
     <div class="calc">
       <div class="row"><label for="laps">Laps in 5 minutes</label><input id="laps" type="number" min="1" max="60" step="1" value="31"></div>
-      <div class="row"><label for="path">Skating the</label><select id="path"><option value="pink" selected>Diamond</option><option value="blue">Hugger</option><option value="violet">Mile Diamond</option><option value="orange">Wide</option></select><span class="note">path</span></div>
+      <div class="row"><label for="path">Skating the</label><select id="path"><option value="pink" selected>Diamond</option><option value="blue">Hugger</option><option value="orange">Wide</option></select><span class="note">path</span></div>
       <div class="answers">
         <div class="ans"><b id="aLap">–</b><span>seconds per lap</span></div>
         <div class="ans"><b id="aDist">–</b><span id="aDistSub">how far she went</span></div>
@@ -230,12 +229,11 @@ function matchPace(target){
 const mmss=s=>{ const m=Math.floor(s/60), r=Math.round(s-m*60); return r===60?`${m+1}:00`:`${m}:${String(r).padStart(2,'0')}`; };
 // ---- skaters: her pace (31 laps in 5 min) ----
 const VT = 13.8*1.4667, RACE=5;
-const KEYS=['blue','pink','violet','orange'];
-const NAME={blue:'Hugger',pink:'Diamond',violet:'Mile Diamond',orange:'Wide'};
+const KEYS=['blue','pink','orange'];
+const NAME={blue:'Hugger',pink:'Diamond',orange:'Wide'};
 const LINES = {
-  blue:   Array(8).fill(0.3),
-  pink:   [5,0.7,0.3,0.8, 5,0.7,0.3,0.8],
-  violet: [11.8,7,6,7.5, 11.8,7,6,7.5],
+  blue:   Array(8).fill(2),                     // as close as a real skater can hold: 2 ft off the tape
+  pink:   [5.6,2.2,2,2.1, 5.6,2.2,2,2.1],       // fastest line for laps, never closer than 2 ft
   orange: Array(8).fill(11)
 };
 const sk = Object.fromEntries(KEYS.map(k=>{
@@ -261,7 +259,7 @@ function track(){
   ctx.font='600 15px Barlow, sans-serif'; ctx.fillText('skaters go counterclockwise', OX, OY+6);
 }
 function paths(){ for(const k of KEYS){ const s=sk[k]; ctx.beginPath(); for(let i=0;i<s.n;i++){ const p=P(s.X[i],s.Y[i]); i?ctx.lineTo(...p):ctx.moveTo(...p); } ctx.closePath();
-  ctx.globalAlpha=.6; ctx.lineWidth=3; ctx.lineCap='round'; ctx.setLineDash(k==='pink'||k==='violet'?[]:[2,7]); ctx.strokeStyle=css('--'+k); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; } }
+  ctx.globalAlpha=.6; ctx.lineWidth=3; ctx.lineCap='round'; ctx.setLineDash(k==='pink'?[]:[2,7]); ctx.strokeStyle=css('--'+k); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; } }
 function star(x,y,r,c){ ctx.beginPath(); for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5, rr=i%2?r*.45:r; ctx.lineTo(x+rr*Math.cos(a), y+rr*Math.sin(a));} ctx.closePath(); ctx.fillStyle=c; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle=css('--panel'); ctx.stroke(); }
 
 // ---- speed graph: one lap, start line to start line ----
@@ -277,10 +275,10 @@ function graph(now){
   sx.fillText('STRAIGHT', gx(turnFr[0][0]/2), sp.height-GB+20); sx.fillText('STRAIGHT', gx((turnFr[0][1]+turnFr[1][0])/2), sp.height-GB+20);
   sx.textAlign='right'; sx.font='500 13px "JetBrains Mono", monospace';
   for(let m=Math.ceil(YLO); m<=YHI; m+=2){ sx.fillText(m+' mph', GL-6, gy(m)+4); sx.strokeStyle=css('--rule'); sx.lineWidth=1; sx.beginPath(); sx.moveTo(GL,gy(m)); sx.lineTo(sp.width-GR,gy(m)); sx.stroke(); }
-  for(const k of ['orange','violet','blue','pink']){ const s=sk[k]; sx.beginPath();
+  for(const k of ['orange','blue','pink']){ const s=sk[k]; sx.beginPath();
     for(let i=0;i<=s.n;i+=2){ const p=[gx(i/s.n), gy(s.MPH[i%s.n])]; i?sx.lineTo(...p):sx.moveTo(...p); }
-    sx.strokeStyle=css('--'+k); sx.lineWidth=k==='pink'||k==='violet'?3:2; sx.setLineDash(k==='pink'||k==='violet'?[]:[3,5]); sx.stroke(); sx.setLineDash([]); }
-  if(now) for(const k of ['orange','violet','blue','pink']){ const w=now[k]; sx.beginPath(); sx.arc(gx(w.frac),gy(w.mph),6,0,2*Math.PI); sx.fillStyle=css('--'+k); sx.fill(); sx.lineWidth=2; sx.strokeStyle=css('--panel'); sx.stroke(); }
+    sx.strokeStyle=css('--'+k); sx.lineWidth=k==='pink'?3:2; sx.setLineDash(k==='pink'?[]:[3,5]); sx.stroke(); sx.setLineDash([]); }
+  if(now) for(const k of ['orange','blue','pink']){ const w=now[k]; sx.beginPath(); sx.arc(gx(w.frac),gy(w.mph),6,0,2*Math.PI); sx.fillStyle=css('--'+k); sx.fill(); sx.lineWidth=2; sx.strokeStyle=css('--panel'); sx.stroke(); }
 }
 function tag(px,py,txt,c){ ctx.font='700 14px "JetBrains Mono", monospace'; const w=ctx.measureText(txt).width+10;
   ctx.fillStyle=c; ctx.globalAlpha=.92; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(px+14,py-10,w,20,4) : ctx.rect(px+14,py-10,w,20); ctx.fill(); ctx.globalAlpha=1;
@@ -291,7 +289,7 @@ function frame(ts){
   if(last!==null && !done) t+=(ts-last)/1000*SPEEDUP; last=ts;
   track(); paths();
   const now={};
-  for(const k of ['orange','violet','blue','pink']){ const s=sk[k], g=goalT(s), tt=Math.min(t,g), w=where(s,tt); now[k]=w;
+  for(const k of ['orange','blue','pink']){ const s=sk[k], g=goalT(s), tt=Math.min(t,g), w=where(s,tt); now[k]=w;
     const [px,py]=P(w.x,w.y); star(px,py,13,css('--'+k));
     $('l_'+k).textContent = tt>=g-1e-6 ? `Done in ${g.toFixed(1)} s` : `${w.laps.toFixed(1)} laps`; }
   graph(now);
@@ -306,7 +304,7 @@ if(matchMedia('(prefers-reduced-motion: reduce)').matches) t=finish;
 requestAnimationFrame(frame);
 
 // ---- how many laps ----
-const DESC={blue:'hugs the inside line',pink:'best line for laps',violet:'best line for a mile',orange:'stays out wide'};
+const DESC={blue:'hugs 2 ft off the inside',pink:'best line for laps',orange:'stays out wide'};
 function lapsCalc(){
   const v=+$('dist').value, u=$('unit').value; if(!(v>0)) return;
   const ft = u==='mi'? v*MILE : u==='km'? v*3280.84 : v;
