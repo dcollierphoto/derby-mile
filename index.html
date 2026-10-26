@@ -99,7 +99,7 @@ a{color:var(--tape)}
     <div class="side">
       <div class="box">
         <h3>Her pace</h3>
-        <div class="row"><label for="laps5">Laps in 5 minutes</label><input id="laps5" type="number" min="15" max="45" step="1" value="27"><button id="match" type="button">Match</button></div>
+        <div class="row"><label for="laps5">Laps in 5 minutes</label><input id="laps5" type="number" min="15" max="45" step="1" value="31"><button id="match" type="button">Match</button></div>
         <div class="row"><label for="mph">Top speed on straights</label><input id="mph" type="number" min="5" max="25" step="0.1" value="13"><span class="note">mph</span></div>
         <p class="note" id="paceMsg">Enter her 27-in-5 count and press Match. It sets her top speed so the simulation skates that many laps in 5 minutes.</p>
       </div>
@@ -133,14 +133,14 @@ a{color:var(--tape)}
   <section class="cols">
     <div style="display:grid;gap:12px">
       <h2>Where her speed comes from</h2>
-      <p>We don't know her top speed, so the page works backward from something she has actually done. Derby skaters are tested on how many laps they can skate in 5 minutes (WFTDA's minimum is 27). Type her number and press Match, and the page finds the top speed that produces that many laps on the line shown, including the standing start and the slowdown.</p>
+      <p>We don't know her top speed, so the page works backward from something she has actually done. Derby skaters are tested on how many laps they can skate in 5 minutes (WFTDA's minimum is 27). Her best is 31 laps. The page finds the top speed that produces that many laps on the line shown, including the standing start and the slowdown.</p>
       <p>After that, the dotted ideal line shows the fastest line for her speed, and you can drag her line to see what a different line would do with the same legs.</p>
     </div>
     <div style="display:grid;gap:12px">
       <h2>How it was figured</h2>
       <ul>
         <li>Track shape is the official WFTDA layout: inside turns are 12 ft 6 in radius, straightaways are 35 ft, and the track is 13 ft wide going into a turn and 15 ft coming out.</li>
-        <li>She can only lean so hard in a turn. I used 0.45 g of sideways force, so cornering speed grows with the square root of the turn radius. Tighter turns force her to slow down.</li>
+        <li>She can only lean so hard in a turn. I used 0.6 g of sideways force, so cornering speed grows with the square root of the turn radius. Tighter turns force her to slow down.</li>
         <li>She speeds up quickly from a stop and more slowly near top speed, and scrubs speed gently, like legs rather than brakes.</li>
         <li>She starts from a stop at the jammer line and never stops after that. Laps are counted at the jammer line.</li>
         <li>Human wobble adds small random drift from lap to lap. The default line already cuts in early on the way into a turn and drifts wide on the way out.</li>
@@ -178,7 +178,7 @@ function offsetAt(g, val){ // g = global progress, val(k) = offset at knot k
 function pointAt(g, w){ const [x,y,nx,ny,W]=inside(g); w=Math.max(0.3,Math.min(W-0.4,w)); return [x+nx*w, y+ny*w]; }
 
 // ---------- physics ----------
-let ALAT=0.45*G;
+let ALAT=0.6*G;
 const STEP=0.5;
 function curvature(X,Y,periodic){ const n=X.length,k=new Float64Array(n),h=6;
   const id=i=> periodic? ((i%n)+n)%n : Math.max(0,Math.min(n-1,i));
@@ -379,8 +379,8 @@ $('human').addEventListener('change',()=>rerun(true));
 $('fade').addEventListener('change',()=>rerun(true));
 
 // ---------- start: match the default 27-in-5 ----------
-vtop=matchPace(27).vtop; $('mph').value=(vtop/1.4667).toFixed(1);
-$('paceMsg').textContent=`Starting point: 27 laps in 5 minutes (WFTDA's minimum) works out to about ${(vtop/1.4667).toFixed(1)} mph on the straights. Enter her real count and press Match.`;
+vtop=matchPace(31).vtop; $('mph').value=(vtop/1.4667).toFixed(1);
+$('paceMsg').textContent=`Her best: 31 laps in 5 minutes. On this line that's about ${(vtop/1.4667).toFixed(1)} mph on the straights. Change the number and press Match to try another.`;
 rerun(false);
 $('play').textContent=playing?'Pause':'Play'; if(!playing) T=run.time*0.3;
 const retheme=()=>buildTL(); matchMedia('(prefers-color-scheme: dark)').addEventListener('change',retheme);
